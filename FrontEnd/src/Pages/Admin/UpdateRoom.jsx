@@ -3,6 +3,38 @@ import { useNavigate, useParams } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import axios from "axios";
 
+const ROOM_TYPES = [
+  "Single Room",
+  "Double Room with Private Bathroom",
+  "Double Room with Balcony",
+  "Triple Room with Balcony",
+  "Triple Room with Bathroom",
+  "Budget Twin Room",
+  "Family Room",
+  "Two-Bedroom Villa",
+  "Executive Suite",
+  "Penthouse",
+];
+
+const ROOM_CAPACITY_DEFAULTS = {
+  "Single Room": 1,
+  "Double Room with Private Bathroom": 2,
+  "Double Room with Balcony": 2,
+  "Triple Room with Balcony": 3,
+  "Triple Room with Bathroom": 3,
+  "Budget Twin Room": 2,
+  "Family Room": 4,
+  "Two-Bedroom Villa": 4,
+  "Executive Suite": 2,
+  "Penthouse": 6,
+};
+
+const AMENITIES_LIST = [
+  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
+  "Room Service", "Balcony", "Garden View", "Safe Box",
+  "Free Parking", "Tea/Coffee Maker", "Breakfast Included",
+];
+
 const Icons = {
   check: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
   xIcon: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
@@ -15,6 +47,10 @@ export default function UpdateRoom() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [form, setForm] = useState({ roomName: "", roomType: "", description: "", capacity: "", amenities: [], availability: "available" });
+  const [errors, setErrors] = useState({});
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [form, setForm] = useState({
     room_name: "",
     room_type_id: "",
@@ -32,6 +68,40 @@ export default function UpdateRoom() {
   const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
+    const fetchRoom = async () => {
+      try {
+        const res = await axios.get(`http://localhost:8081/api/admin/rooms/${id}`);
+        const room = res.data;
+        setForm({
+          roomName:     room.roomName     || "",
+          roomType:     room.roomType     || "",
+          description:  room.description  || "",
+          capacity:     room.capacity     || "",
+          amenities:    room.amenities ? room.amenities.split(",").filter(a => a) : [],
+          availability: room.availability || "available",
+        });
+      } catch (err) {
+        setFetchError(`Room with ID ${id} not found.`);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    fetchRoom();
+  }, [id]);
+
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+  if (name === "roomType") {
+    const defaultCapacity = ROOM_CAPACITY_DEFAULTS[value] || "";
+    setForm(prev => ({ ...prev, roomType: value, capacity: defaultCapacity }));
+  } else {
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+  if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+};
+
+  const toggleAmenity = (amenity) => {
+    setForm(prev => ({ ...prev, amenities: prev.amenities.includes(amenity) ? prev.amenities.filter(a => a !== amenity) : [...prev.amenities, amenity] }));
     fetchRoomTypes();
     fetchRoom();
   }, [id]);
@@ -75,6 +145,8 @@ export default function UpdateRoom() {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (files.some(f => !validTypes.includes(f.type))) { setErrors(prev => ({ ...prev, images: "Only JPG, PNG, and WEBP images are allowed." })); return; }
+    if (files.some(f => f.size > 5 * 1024 * 1024)) { setErrors(prev => ({ ...prev, images: "Each image must be under 5MB." })); return; }
     if (files.some(f => !validTypes.includes(f.type))) {
       setErrors(prev => ({ ...prev, images: "Only JPG, PNG, and WEBP images are allowed." }));
       return;
@@ -93,6 +165,13 @@ export default function UpdateRoom() {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const validate = () => {
+    const e = {};
+    if (!form.roomName.trim())    e.roomName    = "Room name is required.";
+    if (!form.roomType)           e.roomType    = "Please select a room type.";
+    if (!form.description.trim()) e.description = "Description is required.";
+    if (!form.capacity)           e.capacity    = "Room capacity is required.";
+    else if (isNaN(form.capacity) || Number(form.capacity) < 1) e.capacity = "Capacity must be at least 1.";
   const removeExistingImage = async (imageId) => {
     try {
       await axios.delete(`http://localhost:8081/api/admin/room-images/${imageId}`);
@@ -116,6 +195,16 @@ export default function UpdateRoom() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); setSubmitStatus("error"); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("roomName",     form.roomName);
+      formData.append("roomType",     form.roomType);
+      formData.append("description",  form.description);
+      formData.append("capacity",     form.capacity);
+      formData.append("amenities",    form.amenities.join(","));
+      formData.append("availability", form.availability);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setSubmitStatus("error");
@@ -148,6 +237,30 @@ export default function UpdateRoom() {
     }
   };
 
+  const inp = (hasError, extra = {}) => ({ padding: "10px 14px", borderRadius: 8, fontSize: 14, width: "100%", border: `1.5px solid ${hasError ? "#FCA5A5" : "#E5E7EB"}`, background: hasError ? "#FFF5F5" : "#FAFAFA", color: "#111827", fontFamily: "inherit", ...extra });
+
+  if (isFetching) return (
+    <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      <AdminSidebar />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", color: "#9CA3AF", fontSize: 15, fontWeight: 600 }}>Loading room details for ID: {id}...</div>
+      </div>
+    </div>
+  );
+
+  if (fetchError) return (
+    <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      <AdminSidebar />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Room Not Found</div>
+          <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 24 }}>{fetchError}</div>
+          <button onClick={() => navigate("/admin/rooms")} style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer" }}>Back to Room List</button>
+        </div>
+      </div>
+    </div>
+  );
   const inp = (hasError, extra = {}) => ({
     padding: "10px 14px", borderRadius: 8, fontSize: 14, width: "100%",
     border: `1.5px solid ${hasError ? "#FCA5A5" : "#E5E7EB"}`,
@@ -195,6 +308,7 @@ export default function UpdateRoom() {
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
         .fi:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
         .fi { transition: border-color 0.18s, background 0.18s, box-shadow 0.18s; }
+        .ac:hover { border-color: #C9A84C !important; }
         .uz:hover { border-color: #C9A84C !important; background: #FFFBEB !important; }
         .br:hover { background: #F3F4F6 !important; border-color: #C9A84C !important; }
         .bs:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,168,76,0.4) !important; }
@@ -221,6 +335,7 @@ export default function UpdateRoom() {
               <span style={{ color: "#111827", fontWeight: 600 }}>Update Room #{id}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
               <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>🔔</button>
               <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
@@ -236,6 +351,12 @@ export default function UpdateRoom() {
 
           {/* Content */}
           <div style={{ padding: "32px", flex: 1 }}>
+            <div style={{ marginBottom: 24 }}>
+              <button className="bk" onClick={() => navigate("/admin/rooms")} style={{ marginBottom: 12 }}><Icons.arrowLeft /> Back to Room Management</button>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Update Room</h1>
+              <p style={{ fontSize: 14, color: "#6B7280" }}>Editing Room ID: <strong style={{ color: "#C9A84C" }}>#{id}</strong> — {form.roomName}</p>
+            </div>
+
 
             {/* Page header */}
             <div style={{ marginBottom: 24 }}>
@@ -260,6 +381,47 @@ export default function UpdateRoom() {
             <form onSubmit={handleSubmit} noValidate>
               <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
+                <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Edit Room Details</span>
+                  <span style={{ marginLeft: "auto", background: "#FEF3C7", color: "#92400E", fontSize: 11, fontWeight: 700, padding: "3px 12px", borderRadius: 20 }}>EDITING #{id}</span>
+                </div>
+
+                <div style={{ padding: "28px" }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Basic Information</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Name <span style={{ color: "#EF4444" }}>*</span></label>
+                      <input className="fi" style={inp(!!errors.roomName)} type="text" name="roomName" value={form.roomName} onChange={handleChange} />
+                      {errors.roomName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomName}</span>}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Type <span style={{ color: "#EF4444" }}>*</span></label>
+                      <div style={{ position: "relative" }}>
+                        <select className="fi" style={{ ...inp(!!errors.roomType), appearance: "none", cursor: "pointer" }} name="roomType" value={form.roomType} onChange={handleChange}>
+                          <option value="">Select room type...</option>
+                          {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", fontSize: 11, pointerEvents: "none" }}>▼</span>
+                      </div>
+                      {errors.roomType && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomType}</span>}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Capacity <span style={{ color: "#EF4444" }}>*</span></label>
+                      <input className="fi" style={inp(!!errors.capacity)} type="number" name="capacity" value={form.capacity} onChange={handleChange} min="1" />
+                      {errors.capacity && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.capacity}</span>}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Availability Status</label>
+                      <div style={{ position: "relative" }}>
+                        <select className="fi" style={{ ...inp(false), appearance: "none", cursor: "pointer" }} name="availability" value={form.availability} onChange={handleChange}>
+                          <option value="available">Available</option>
+                          <option value="unavailable">Unavailable</option>
+                          <option value="maintenance">Under Maintenance</option>
                 {/* Card header */}
                 <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
@@ -318,10 +480,36 @@ export default function UpdateRoom() {
                       </div>
                     </div>
 
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Description <span style={{ color: "#EF4444" }}>*</span></label>
+                      <textarea className="fi" style={{ ...inp(!!errors.description), minHeight: 100, resize: "vertical" }} name="description" value={form.description} onChange={handleChange} />
+                      {errors.description && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.description}</span>}
+                    </div>
                   </div>
 
                   <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
 
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Facilities</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                    {AMENITIES_LIST.map(amenity => {
+                      const sel = form.amenities.includes(amenity);
+                      return (
+                        <div key={amenity} className="ac" onClick={() => toggleAmenity(amenity)}
+                          style={{ padding: "9px 12px", borderRadius: 8, fontSize: 13, display: "flex", alignItems: "center", gap: 8, border: `1.5px solid ${sel ? "#C9A84C" : "#E5E7EB"}`, background: sel ? "#FFFBEB" : "#FAFAFA", color: sel ? "#92400E" : "#4B5563", fontWeight: sel ? 600 : 400, cursor: "pointer", userSelect: "none", transition: "all 0.15s" }}>
+                          <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, background: sel ? "#C9A84C" : "transparent", border: `1.5px solid ${sel ? "#C9A84C" : "#D1D5DB"}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                            {sel && <Icons.check />}
+                          </div>
+                          {amenity}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
+
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Update Room Images</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 500 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Upload New Images <span style={{ color: "#9CA3AF", fontWeight: 400 }}></span></label>
                   {/* Room Images */}
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Room Images</p>
                   
@@ -371,6 +559,12 @@ export default function UpdateRoom() {
                     </label>
                     <input id="roomImages" type="file" accept="image/*" multiple onChange={handleImageUpload} />
                     {errors.images && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.images}</span>}
+                    {imagePreviews.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+                        {imagePreviews.map((src, i) => (
+                          <div key={i} style={{ position: "relative", width: 80, height: 80 }}>
+                            <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #E5E7EB" }} />
+                            <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
                     
                     {/* New Image Previews */}
                     {imagePreviews.length > 0 && (
@@ -386,6 +580,14 @@ export default function UpdateRoom() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
+                  <button type="button" className="br" onClick={() => navigate("/admin/rooms")} style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>Cancel</button>
+                  <button type="submit" className="bs" disabled={isLoading} style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
+                    <Icons.save />{isLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
 
                 </div>
 
