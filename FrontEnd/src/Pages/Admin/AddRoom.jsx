@@ -33,11 +33,17 @@ const AMENITIES_LIST = [
   "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
   "Room Service", "Balcony", "Garden View", "Safe Box",
   "Free Parking", "Tea/Coffee Maker", "Breakfast Included",
+const ROOM_TYPES = ["Standard", "Deluxe", "Suite", "Family Room", "Executive", "Penthouse"];
+const AMENITIES_LIST = [
+  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
+  "Room Service", "Balcony", "Sea View", "Garden View",
+  "Jacuzzi", "King Size Bed", "Safe Box", "Hair Dryer",
 ];
 
 const Icons = {
   bell: () => (<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>),
   upload: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>),
+  globe: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>),
   check: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
   xIcon: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
@@ -50,6 +56,7 @@ export default function AddRoom() {
   const [errors, setErrors] = useState({});
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [media360, setMedia360] = useState(null);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,6 +70,10 @@ export default function AddRoom() {
   }
   if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
 };
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
 
   const toggleAmenity = (amenity) => {
     setForm(prev => ({ ...prev, amenities: prev.amenities.includes(amenity) ? prev.amenities.filter(a => a !== amenity) : [...prev.amenities, amenity] }));
@@ -79,6 +90,7 @@ export default function AddRoom() {
   };
 
   
+  const handle360Upload = (e) => { const file = e.target.files[0]; if (file) setMedia360(file.name); };
   const removeImage = (index) => { setImages(prev => prev.filter((_, i) => i !== index)); setImagePreviews(prev => prev.filter((_, i) => i !== index)); };
 
   const validate = () => {
@@ -261,6 +273,7 @@ export default function AddRoom() {
                   <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
 
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Facilities</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Amenities</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
                     {AMENITIES_LIST.map(amenity => {
                       const sel = form.amenities.includes(amenity);
@@ -298,6 +311,7 @@ export default function AddRoom() {
 
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Room Images & Media</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px 24px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Images <span style={{ color: "#EF4444" }}>*</span></label>
                       <label htmlFor="roomImages">
@@ -324,6 +338,18 @@ export default function AddRoom() {
                     </div>
 
       
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>360° / 3D Media <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></label>
+                      <label htmlFor="media360">
+                        <div className="uz" style={{ border: "2px dashed #D1D5DB", borderRadius: 12, padding: "28px 20px", textAlign: "center", background: "#FAFAFA", cursor: "pointer" }}>
+                          <div style={{ display: "flex", justifyContent: "center", color: "#9CA3AF", marginBottom: 8 }}><Icons.globe /></div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Upload 360° tour</div>
+                          <div style={{ fontSize: 12, color: "#9CA3AF" }}>MP4, equirectangular JPG · Max 50MB</div>
+                        </div>
+                      </label>
+                      <input id="media360" type="file" accept="video/*,image/*" onChange={handle360Upload} />
+                      {media360 && <div style={{ padding: "8px 12px", background: "#ECFDF5", borderRadius: 8, fontSize: 13, color: "#065F46", border: "1px solid #6EE7B7" }}>✓ {media360}</div>}
+                    </div>
                   </div>
                 </div>
 
