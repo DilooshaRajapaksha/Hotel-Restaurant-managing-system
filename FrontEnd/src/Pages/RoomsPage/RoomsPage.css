@@ -1,0 +1,53 @@
+.rooms-page{
+  min-height: 100vh;
+  background: #f8f8f8;
+}
+
+.header {
+  padding: 20px 40px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.logo img {
+  height: 80px;
+  width: auto;
+}
+
+.rooms-section {
+  padding: 0 0 40px 0;
+}
+
+.sort-by {
+  margin: 30px 0 25px 0;    
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.sort-by label {
+  font-weight: 600;
+  color: #333;
+}
+
+.sort-by select {
+  padding: 9px 14px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  background: white;
+  font-size: 1rem;
+  min-width: 220px;
+  cursor: pointer;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  padding: 0 20px;
+  margin-top: 20px;
+}
