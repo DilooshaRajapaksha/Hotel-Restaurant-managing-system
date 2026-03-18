@@ -358,14 +358,20 @@ export default function UpdateFood() {
                         Category <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(optional)</span>
                       </label>
                       <div style={{ position: "relative" }}>
-                        <select className="fi" style={{ ...inp(false), appearance: "none", cursor: "pointer" }} name="category_id" value={form.category_id} onChange={handleChange}>
-                          <option value="">Uncategorized</option>
+                        <select
+                          className="fi"
+                          style={{ ...inp(false), appearance: "none", cursor: "pointer" }}
+                          name="category_id"
+                          value={form.category_id}
+                          onChange={handleChange}
+                        >
                           {categories.map((c) => (
                             <option key={c.category_id} value={c.category_id}>
                               {c.category_name || c.menu_name || `Category #${c.category_id}`}
                             </option>
                           ))}
                         </select>
+
                         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", fontSize: 11, pointerEvents: "none" }}>
                           ▼
                         </span>
