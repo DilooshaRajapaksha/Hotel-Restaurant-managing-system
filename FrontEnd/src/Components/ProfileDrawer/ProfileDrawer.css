@@ -1,0 +1,177 @@
+.profile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.profile-drawer-overlay.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.profile-drawer {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 420px;
+  height: 100%;
+  background: white;
+  box-shadow: -8px 0 25px rgba(0,0,0,0.35);
+  transition: right 0.4s ease;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-drawer.open {
+  right: 0;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid #eee;
+  background: #111;
+  color: #d4af37;
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  color: #d4af37;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.drawer-content {
+  padding: 2rem 1.8rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.profile-avatar {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.avatar-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #d4af37;
+}
+
+.upload-btn {
+  margin-top: 1rem;
+  display: inline-block;
+  background: #d4af37;
+  color: #111;
+  padding: 0.6rem 1.3rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9f9f9;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212,175,55,0.15);
+}
+
+.drawer-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.save-btn, .logout-btn {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #d4af37;
+  color: #111;
+}
+
+.save-btn:hover {
+  background: #c19c2e;
+}
+
+.logout-btn {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.logout-btn:hover {
+  background: #f5c6cb;
+}
+
+.message {
+  padding: 0.9rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+@media (max-width: 768px) {
+  .profile-drawer {
+    width: 90%;
+    right: -90%;
+  }
+}
