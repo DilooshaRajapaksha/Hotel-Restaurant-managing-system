@@ -9,6 +9,14 @@ function App() {
   return (
     <div className="app-route">
       <Routes>
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/:id" element={<RoomDetail />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
