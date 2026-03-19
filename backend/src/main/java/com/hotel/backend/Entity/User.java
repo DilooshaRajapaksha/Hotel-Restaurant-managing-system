@@ -26,6 +26,9 @@ public class User {
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
+    @Column(name = "role", nullable = false)
+    private String role;
+
     public User() {}
 
     public Long getUserId() {
@@ -74,5 +77,13 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

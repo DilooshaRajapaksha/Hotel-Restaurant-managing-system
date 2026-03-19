@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './SignUp.css';
-import Logo from '../../assets/Pictures/SignInLogo.png';  
 import axios from 'axios';
+import Logo from '../../assets/Pictures/SignInLogo.png';
 
 const SignUp = () => {
   const [form, setForm] = useState({
@@ -10,127 +10,153 @@ const SignUp = () => {
     email: '',
     phoneNumber: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (form.password !== form.confirmPassword) {
-      alert("Passwords don't match");
+      setError("Passwords don't match");
       return;
     }
+
+    setLoading(true);
+
     const dataToSend = {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phoneNumber: form.phoneNumber,
-      password: form.password
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      email: form.email.trim(),
+      phoneNumber: form.phoneNumber.trim(),
+      password: form.password,
     };
 
-    axios.post('http://localhost:8080/api/auth/register', dataToSend)
-      .then(response => {
-        console.log('Sign Up successful:', response.data);
-        alert('Account created successfully! Please sign in.');
-        window.location.href = '/signin';
-      })
-      .catch(error => {
-        console.error('Sign Up error:', error);
-        alert('Error creating account. Please try again.');
-      }); 
+    try {
+      const response = await axios.post('http://localhost:8080/api/auth/register', dataToSend);
+      console.log('Signup success:', response.data);
+      alert('Account created! Please sign in.');
+      window.location.href = '/signin';
+    } catch (err) {
+      console.error('Signup failed:', err);
+      setError(
+        err.response?.data?.message ||
+        'Could not create account. Email may already exist.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="signup-page">
+    <div className="signup-page"> 
       <div className="top-right-link">
-        <a href="/signin" className="signin-btn">Sign in</a>
+        <a href="/signin" className="signin-btn">
+          Sign In
+        </a>
       </div>
 
-      <div className="form-container">
+      <div className="form-wrapper">
         <div className="logo-section">
-        <img 
-            src={Logo} 
-            alt="Hotel Logo" 
-            className="logo" />
+          <img src={Logo} alt="Hotel Logo" className="logo" />
         </div>
 
-        <form onSubmit={handleSubmit} className="signup-form">
+        <form onSubmit={handleSubmit} className="signin-form">
           <div className="form-group">
-            <label>First Name</label>
+            <label htmlFor="firstName">First Name</label>
             <input
-              type="text"
+              id="firstName"
               name="firstName"
+              type="text"
               value={form.firstName}
               onChange={handleChange}
+              placeholder="Namal"
               required
+              autoFocus
             />
           </div>
 
           <div className="form-group">
-            <label>Last Name</label>
+            <label htmlFor="lastName">Last Name</label>
             <input
-              type="text"
+              id="lastName"
               name="lastName"
+              type="text"
               value={form.lastName}
               onChange={handleChange}
+              placeholder="Bandara"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Email Address</label>
+            <label htmlFor="email">Email</label>
             <input
-              type="email"
+              id="email"
               name="email"
+              type="email"
               value={form.email}
               onChange={handleChange}
+              placeholder="your.email@example.com"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Phone Number</label>
+            <label htmlFor="phoneNumber">Phone Number</label>
             <input
-              type="tel"
+              id="phoneNumber"
               name="phoneNumber"
+              type="tel"
               value={form.phoneNumber}
               onChange={handleChange}
+              placeholder="+94 77 123 4567"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
-              type="password"
+              id="password"
               name="password"
+              type="password"
               value={form.password}
               onChange={handleChange}
+              placeholder="••••••••"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Confirm Password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
-              type="password"
+              id="confirmPassword"
               name="confirmPassword"
+              type="password"
               value={form.confirmPassword}
               onChange={handleChange}
+              placeholder="••••••••"
               required
             />
           </div>
 
-          <button type="submit" className="create-btn">
-            Create Account
+          {error && <p style={{ color: '#dc2626', fontSize: '0.95rem', textAlign: 'center' }}>{error}</p>}
+
+          <button type="submit" className="create-btn" disabled={loading}>
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <p className="signin-redirect">
-          Already have an account? <a href="/signin">Sign in here</a>
+        <p className="signup-redirect">
+          Already have an account? <a href="/signin">Sign in</a>
         </p>
       </div>
     </div>
