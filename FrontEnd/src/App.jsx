@@ -1,64 +1,31 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import AddRoom from "./Pages/Admin/AddRoom";
-import RoomList from "./Pages/Admin/RoomList";
-import UpdateRoom from "./Pages/Admin/UpdateRoom";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './Pages/HomePage/Home.jsx';
+import Login from './Pages/SignIn/SignIn.jsx';
+import Signup from './Pages/SignUp/SignUp.jsx';
+import ForgotPassword from './Pages/ForgetPassword/ForgotPassword.jsx';
+import ResetPassword from './Pages/RestPassword/ResetPassword.jsx';
 
-import FoodList from "./Pages/Admin/ResManage/FoodList";
-import AddFood from "./Pages/Admin/ResManage/AddFood";
-import AddCategory from "./Pages/Admin/ResManage/AddCategory";
-import UpdateFood from "./Pages/Admin/ResManage/UpdateFood";
-import UpdateCategory from "./Pages/Admin/ResManage/UpdateCategory";
-
-
-import OrderList from "./Pages/Admin/OrderManage/OrderList";
-import OrderDetails from "./Pages/Admin/OrderManage/OrderDetails";
-
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
+    <div className="app-route">
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/rooms" replace />} />
-
-        {/* Rooms */}
-        <Route path="/admin/rooms" element={<RoomList />} />
-        <Route path="/admin/rooms/add" element={<AddRoom />} />
-        <Route path="/admin/rooms/edit/:id" element={<UpdateRoom />} />
-
-        {/* Menu */}
-        <Route path="/admin/menu" element={<FoodList />} />
-        <Route path="/admin/menu/add" element={<AddFood />} />
-        <Route path="/admin/menu/add-category" element={<AddCategory />} />
-        <Route path="/admin/menu/edit/:id" element={<UpdateFood />} />
-        <Route path="/admin/menu/categories/edit/:id" element={<UpdateCategory />} />
-
-
-        {/* Orders */}
-        <Route path="/admin/orders" element={<OrderList />} />
-        <Route path="/admin/orders/:id" element={<OrderDetails />} />
-
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/admin/rooms" replace />} />
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/:id" element={<RoomDetail />} />
       </Routes>
     </BrowserRouter>
   );
 }
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
-import Home from './Pages/HomePage/Home.jsx'
-import Login from './Pages/SignIn/SignIn.jsx'
-import Signup from './Pages/SignUp/SignUp.jsx'
-  
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
+export default App;
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<div>404 - Page is under development</div>} />
       </Routes>
-    </BrowserRouter>
-  )
+    </div>
+  );
 }
 
-export default App 
+export default App;

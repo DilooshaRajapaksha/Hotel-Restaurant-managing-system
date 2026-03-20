@@ -3,6 +3,36 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import axios from "axios";
 
+const ROOM_TYPES = [
+  "Single Room",
+  "Double Room with Private Bathroom",
+  "Double Room with Balcony",
+  "Triple Room with Balcony",
+  "Triple Room with Bathroom",
+  "Budget Twin Room",
+  "Family Room",
+  "Two-Bedroom Villa",
+  "Executive Suite",
+  "Penthouse",
+];
+
+const ROOM_CAPACITY_DEFAULTS = {
+  "Single Room": 1,
+  "Double Room with Private Bathroom": 2,
+  "Double Room with Balcony": 2,
+  "Triple Room with Balcony": 3,
+  "Triple Room with Bathroom": 3,
+  "Budget Twin Room": 2,
+  "Family Room": 4,
+  "Two-Bedroom Villa": 4,
+  "Executive Suite": 2,
+  "Penthouse": 6,
+};
+
+const AMENITIES_LIST = [
+  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
+  "Room Service", "Balcony", "Garden View", "Safe Box",
+  "Free Parking", "Tea/Coffee Maker", "Breakfast Included",
 const ROOM_TYPES = ["Standard", "Deluxe", "Suite", "Family Room", "Executive", "Penthouse"];
 const AMENITIES_LIST = [
   "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
@@ -31,6 +61,15 @@ export default function AddRoom() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
+  const { name, value } = e.target;
+  if (name === "roomType") {
+    const defaultCapacity = ROOM_CAPACITY_DEFAULTS[value] || "";
+    setForm(prev => ({ ...prev, roomType: value, capacity: defaultCapacity }));
+  } else {
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+  if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+};
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
@@ -50,6 +89,7 @@ export default function AddRoom() {
     setImagePreviews(files.map(f => URL.createObjectURL(f)));
   };
 
+  
   const handle360Upload = (e) => { const file = e.target.files[0]; if (file) setMedia360(file.name); };
   const removeImage = (index) => { setImages(prev => prev.filter((_, i) => i !== index)); setImagePreviews(prev => prev.filter((_, i) => i !== index)); };
 
@@ -232,6 +272,7 @@ export default function AddRoom() {
 
                   <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
 
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Facilities</p>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Amenities</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
                     {AMENITIES_LIST.map(amenity => {
@@ -269,6 +310,7 @@ export default function AddRoom() {
                   <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
 
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Room Images & Media</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px 24px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Images <span style={{ color: "#EF4444" }}>*</span></label>
@@ -295,6 +337,7 @@ export default function AddRoom() {
                       )}
                     </div>
 
+      
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>360° / 3D Media <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></label>
                       <label htmlFor="media360">

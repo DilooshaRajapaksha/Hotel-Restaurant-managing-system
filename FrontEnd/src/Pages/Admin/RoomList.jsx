@@ -12,6 +12,9 @@ const Icons = {
 };
 
 const STATUS_COLORS = {
+  available:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981" },
+  unavailable: { bg: "#FEE2E2", color: "#991B1B", dot: "#EF4444" },
+  maintenance: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B" },
   AVAILABLE: { bg: "#D1FAE5", color: "#065F46", dot: "#10B981" },
   MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B" },
 };
@@ -24,6 +27,7 @@ export default function RoomList() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
+  useEffect(() => { fetchRooms(); }, []);
   useEffect(() => {
     fetchRooms();
     fetchRoomTypes();
@@ -41,6 +45,9 @@ export default function RoomList() {
     }
   };
 
+  const filteredRooms = rooms.filter(room =>
+    room.roomName?.toLowerCase().includes(search.toLowerCase()) ||
+    room.roomType?.toLowerCase().includes(search.toLowerCase())
   const fetchRoomTypes = async () => {
     try {
       const res = await axios.get("http://localhost:8081/api/admin/room-types");
@@ -109,6 +116,8 @@ export default function RoomList() {
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Room Management</h1>
                 <p style={{ fontSize: 14, color: "#6B7280" }}>View, add and update hotel rooms.</p>
               </div>
+              <button className="add-btn" onClick={() => navigate("/admin/rooms/add")}
+                style={{ padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
               <button
                 className="add-btn"
                 onClick={() => navigate("/admin/rooms/add")}
@@ -118,6 +127,12 @@ export default function RoomList() {
               </button>
             </div>
 
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+              {[
+                { label: "Total Rooms", value: rooms.length, color: "#C9A84C" },
+                { label: "Available", value: rooms.filter(r => r.availability === "available").length, color: "#10B981" },
+                { label: "Unavailable / Maintenance", value: rooms.filter(r => r.availability !== "available").length, color: "#EF4444" },
             {/* Stats cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
@@ -132,6 +147,7 @@ export default function RoomList() {
               ))}
             </div>
 
+            {/* Table card */}
             {/* Search bar */}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -142,6 +158,12 @@ export default function RoomList() {
                 </div>
                 <div style={{ position: "relative" }}>
                   <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}><Icons.search /></span>
+                  <input className="search-input"
+                    style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 220, color: "#111827" }}
+                    placeholder="Search rooms..." value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+              </div>
+
                   <input
                     className="search-input"
                     style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 220, color: "#111827" }}
@@ -167,6 +189,7 @@ export default function RoomList() {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
+                      {["ID", "Room Name", "Type", "Capacity", "Availability", "Action"].map(h => (
                       {["ID", "Room Name", "Type", "Price", "Status", "Action"].map(h => (
                         <th key={h} style={{ padding: "12px 24px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase" }}>{h}</th>
                       ))}
@@ -174,6 +197,27 @@ export default function RoomList() {
                   </thead>
                   <tbody>
                     {filteredRooms.map((room, i) => {
+                      const s = STATUS_COLORS[room.availability] || STATUS_COLORS.unavailable;
+                      return (
+                        <tr key={room.id} className="room-row" style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA", cursor: "default" }}>
+                          <td style={{ padding: "14px 24px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>#{room.id}</td>
+                          <td style={{ padding: "14px 24px" }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{room.roomName}</div>
+                            <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>{room.description?.substring(0, 40)}{room.description?.length > 40 ? "..." : ""}</div>
+                          </td>
+                          <td style={{ padding: "14px 24px" }}>
+                            <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>{room.roomType}</span>
+                          </td>
+                          <td style={{ padding: "14px 24px", fontSize: 13, color: "#374151", fontWeight: 500 }}>{room.capacity} guests</td>
+                          <td style={{ padding: "14px 24px" }}>
+                            <span style={{ background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 20, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+                              {room.availability?.charAt(0).toUpperCase() + room.availability?.slice(1)}
+                            </span>
+                          </td>
+                          <td style={{ padding: "14px 24px" }}>
+                            <button className="edit-btn" onClick={() => navigate(`/admin/rooms/edit/${room.id}`)}
+                              style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                       const statusStyle = STATUS_COLORS[room.room_status] || STATUS_COLORS.MAINTENANCE;
                       return (
                         <tr key={room.room_id} className="room-row" style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
