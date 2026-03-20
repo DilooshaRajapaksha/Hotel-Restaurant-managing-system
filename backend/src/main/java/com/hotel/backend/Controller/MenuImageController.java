@@ -1,7 +1,7 @@
-package com.hotel.backend.controller;
+package com.hotel.backend.Controller;
 
-import com.hotel.backend.dto.MenuImageDTO;
-import com.hotel.backend.service.MenuItemService;
+import com.hotel.backend.DTO.MenuImageDTO;
+import com.hotel.backend.Service.MenuItemService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

@@ -1,12 +1,12 @@
-package com.hotel.backend.service;
+package com.hotel.backend.Service;
 
-import com.hotel.backend.dto.MenuImageDTO;
-import com.hotel.backend.dto.MenuItemDTO;
-import com.hotel.backend.entity.MenuImage;
-import com.hotel.backend.entity.MenuItem;
-import com.hotel.backend.repo.MenuCategoryRepo;
-import com.hotel.backend.repo.MenuImageRepo;
-import com.hotel.backend.repo.MenuItemRepo;
+import com.hotel.backend.DTO.MenuImageDTO;
+import com.hotel.backend.DTO.MenuItemDTO;
+import com.hotel.backend.Entity.MenuImage;
+import com.hotel.backend.Entity.MenuItem;
+import com.hotel.backend.Repo.MenuCategoryRepo;
+import com.hotel.backend.Repo.MenuImageRepo;
+import com.hotel.backend.Repo.MenuItemRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,24 +16,24 @@ import java.util.stream.Collectors;
 @Service
 public class MenuItemService {
 
-    private final MenuItemRepo itemRepo;
+    private final MenuItemRepo menuItemRepo;
     private final MenuImageRepo imageRepo;
     private final MenuCategoryRepo categoryRepo;
     private final FileStorageService fileStorage;
 
-    public MenuItemService(MenuItemRepo itemRepo, MenuImageRepo imageRepo, MenuCategoryRepo categoryRepo, FileStorageService fileStorage) {
-        this.itemRepo = itemRepo;
+    public MenuItemService(MenuItemRepo menuItemRepo, MenuImageRepo imageRepo, MenuCategoryRepo categoryRepo, FileStorageService fileStorage) {
+        this.menuItemRepo = menuItemRepo;
         this.imageRepo = imageRepo;
         this.categoryRepo = categoryRepo;
         this.fileStorage = fileStorage;
     }
 
     public List<MenuItemDTO> getAllItems() {
-        return itemRepo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+        return menuItemRepo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public MenuItemDTO getItem(Long id) {
-        MenuItem item = itemRepo.findById(id).orElseThrow(() -> new RuntimeException("Menu item not found"));
+        MenuItem item = menuItemRepo.findById(id).orElseThrow(() -> new RuntimeException("Menu item not found"));
         return toDTO(item);
     }
 
@@ -45,7 +45,7 @@ public class MenuItemService {
         MenuItem item = new MenuItem();
         applyDTO(item, dto);
 
-        MenuItem saved = itemRepo.save(item);
+        MenuItem saved = menuItemRepo.save(item);
 
         if (images != null) saveImages(saved.getItemId(), images);
 
@@ -53,7 +53,7 @@ public class MenuItemService {
     }
 
     public MenuItemDTO update(Long id, MenuItemDTO dto, List<MultipartFile> images) throws Exception {
-        MenuItem item = itemRepo.findById(id).orElseThrow(() -> new RuntimeException("Menu item not found"));
+        MenuItem item = menuItemRepo.findById(id).orElseThrow(() -> new RuntimeException("Menu item not found"));
 
         // category_id is NOT NULL - if frontend sends empty, keep old
         if (dto.getCategory_id() != null) {
@@ -70,7 +70,7 @@ public class MenuItemService {
         item.setPreparationTime(dto.getPreparation_time());
         if (dto.getIs_available() != null) item.setIsAvailable(dto.getIs_available());
 
-        MenuItem saved = itemRepo.save(item);
+        MenuItem saved = menuItemRepo.save(item);
 
         if (images != null && !images.isEmpty()) saveImages(saved.getItemId(), images);
 
@@ -87,6 +87,14 @@ public class MenuItemService {
         imageRepo.delete(img);
     }
 
+
+    public void deleteItem(Long id) {
+        if (!menuItemRepo.existsById(id)) {
+            throw new RuntimeException("Menu item not found.");
+        }
+
+        menuItemRepo.deleteById(id);
+    }
     // helpers
 
     private void saveImages(Long itemId, List<MultipartFile> images) throws Exception {

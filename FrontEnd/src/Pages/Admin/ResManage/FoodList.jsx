@@ -16,6 +16,15 @@ const Icons = {
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   ),
+  delete: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  ),
   search: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8" />
@@ -37,19 +46,28 @@ const STATUS_COLORS = {
 
 export default function FoodList() {
   const navigate = useNavigate();
+
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [thumbs, setThumbs] = useState({}); // { [item_id]: "/uploads/..." }
+  const [thumbs, setThumbs] = useState({});
+
   const [loading, setLoading] = useState(true);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+
   const [error, setError] = useState(null);
+  const [categoryError, setCategoryError] = useState(null);
+
   const [search, setSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+
+  const [deletingId, setDeletingId] = useState(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState(null);
 
   useEffect(() => {
     fetchItems();
     fetchCategories();
   }, []);
 
-  // After items load and fetch thumbnails for items missing an image in list response
   useEffect(() => {
     if (!items || items.length === 0) return;
 
@@ -62,8 +80,6 @@ export default function FoodList() {
           needThumb.map(async (it) => {
             const id = it.item_id;
             if (!id) return;
-
-            // Skip if already fetched
             if (thumbs[id]) return;
 
             const imgRes = await axios.get(`http://localhost:8081/api/admin/menu-items/${id}/images`);
@@ -82,8 +98,8 @@ export default function FoodList() {
             }
           })
         );
-      } catch (e) {
-        // silently ignore thumbnail failures
+      } catch {
+        // ignore thumb errors
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,9 +108,10 @@ export default function FoodList() {
   const fetchItems = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await axios.get("http://localhost:8081/api/admin/menu-items");
       setItems(res.data || []);
-    } catch (err) {
+    } catch {
       setError("Failed to load menu items. Make sure the backend is running.");
     } finally {
       setLoading(false);
@@ -103,21 +120,79 @@ export default function FoodList() {
 
   const fetchCategories = async () => {
     try {
+      setCategoryLoading(true);
+      setCategoryError(null);
       const res = await axios.get("http://localhost:8081/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch {
       setCategories([]);
+      setCategoryError("Failed to load menu categories.");
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleDelete = async (itemId, itemName) => {
+    const confirmed = window.confirm(`Are you sure you want to remove "${itemName}"?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(itemId);
+      await axios.delete(`http://localhost:8081/api/admin/menu-items/${itemId}`);
+
+      setItems((prev) => prev.filter((item) => item.item_id !== itemId));
+      setThumbs((prev) => {
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to delete item:", err);
+      const errorMessage =
+    err?.response?.data?.message ||
+    err?.response?.data ||
+    "Failed to delete menu item. Please try again.";
+
+    alert(errorMessage);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    const confirmed = window.confirm(`Are you sure you want to remove category "${categoryName}"?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingCategoryId(categoryId);
+      await axios.delete(`http://localhost:8081/api/admin/menu-categories/${categoryId}`);
+      setCategories((prev) => prev.filter((cat) => cat.category_id !== categoryId));
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+      alert(
+        err?.response?.data?.message ||
+          err?.response?.data ||
+          "Failed to delete category. It may be linked to menu items."
+      );
+    } finally {
+      setDeletingCategoryId(null);
     }
   };
 
   const getCategoryName = (categoryId) => {
     const cat = categories.find((c) => String(c.category_id) === String(categoryId));
-    return cat ? (cat.category_name || cat.name || `Category #${cat.category_id}`) : `Category #${categoryId}`;
+    return cat ? (cat.category_name || c.name || `Category #${cat.category_id}`) : `Category #${categoryId}`;
   };
 
-  const filtered = items.filter((it) =>
+  const filteredItems = items.filter((it) =>
     it.item_name?.toLowerCase().includes(search.toLowerCase()) ||
     getCategoryName(it.category_id)?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter((cat) =>
+    (cat.category_name || "")
+      .toLowerCase()
+      .includes(categorySearch.toLowerCase())
   );
 
   const toStatusKey = (isAvailable) => (isAvailable ? "AVAILABLE" : "UNAVAILABLE");
@@ -127,10 +202,8 @@ export default function FoodList() {
     return `LKR ${val}`;
   };
 
-  // If  /menu-items already returns some image field, handle it here
   const getInlineImageUrl = (it) => {
-    const v = it?.image_url ?? it?.item_image ?? it?.thumbnail ?? "";
-    return v;
+    return it?.image_url ?? it?.item_image ?? it?.thumbnail ?? "";
   };
 
   const getThumbUrl = (it) => {
@@ -139,8 +212,6 @@ export default function FoodList() {
     const url = inline || fromMap || "";
     if (!url) return "";
 
-    // Backend in UpdateFood uses: http://localhost:8081 + url
-    // So if url already starts with http, keep it; otherwise prefix it.
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
     return `http://localhost:8081${url}`;
   };
@@ -155,6 +226,8 @@ export default function FoodList() {
         .row:hover { background: #FFFBEB !important; }
         .edit-btn:hover { background: linear-gradient(135deg,#C9A84C,#8B6914) !important; color: #fff !important; border-color: transparent !important; }
         .edit-btn { transition: all 0.18s; }
+        .delete-btn:hover { background: #EF4444 !important; color: #fff !important; border-color: #EF4444 !important; }
+        .delete-btn { transition: all 0.18s; }
         .add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,168,76,0.4) !important; }
         .add-btn { transition: all 0.18s; }
         .search-input:focus { border-color: #C9A84C !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
@@ -162,50 +235,84 @@ export default function FoodList() {
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
-          {/* Topbar */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Admin</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
               <span style={{ color: "#111827", fontWeight: 600 }}>Menu Management</span>
             </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>🔔</button>
+              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>
+                🔔
+              </button>
               <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>
+                  A
+                </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
                   <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
               </div>
             </div>
           </div>
 
-          {/* Content */}
           <div style={{ padding: "32px", flex: 1 }}>
-
-            {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
               <div>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Menu Management</h1>
-                <p style={{ fontSize: 14, color: "#6B7280" }}>View, add and update restaurant menu items.</p>
+                <p style={{ fontSize: 14, color: "#6B7280" }}>View, add, update and delete restaurant menu items.</p>
               </div>
-              <button
-                className="add-btn"
-                onClick={() => navigate("/admin/menu/add")}
-                style={{ padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}
-              >
-                <Icons.plus /> Add New Item
-              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button
+                  className="add-btn"
+                  onClick={() => navigate("/admin/menu/add-category")}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    border: "none",
+                    background: "linear-gradient(135deg,#C9A84C,#8B6914)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow: "0 2px 8px rgba(201,168,76,0.3)",
+                  }}
+                >
+                  <Icons.plus /> Add Category
+                </button>
+
+                <button
+                  className="add-btn"
+                  onClick={() => navigate("/admin/menu/add")}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    border: "none",
+                    background: "linear-gradient(135deg,#C9A84C,#8B6914)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow: "0 2px 8px rgba(201,168,76,0.3)",
+                  }}
+                >
+                  <Icons.plus /> Add New Item
+                </button>
+              </div>
             </div>
 
-            {/* Stats cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
                 { label: "Total Items", value: items.length, color: "#C9A84C" },
@@ -219,16 +326,21 @@ export default function FoodList() {
               ))}
             </div>
 
-            {/* Table */}
-            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+            {/* Items Table */}
+            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: 28 }}>
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
                   <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>All Items</span>
-                  <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 10px", borderRadius: 20 }}>{filtered.length}</span>
+                  <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 10px", borderRadius: 20 }}>
+                    {filteredItems.length}
+                  </span>
                 </div>
+
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}><Icons.search /></span>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}>
+                    <Icons.search />
+                  </span>
                   <input
                     className="search-input"
                     style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 240, color: "#111827" }}
@@ -243,7 +355,7 @@ export default function FoodList() {
                 <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading items...</div>
               ) : error ? (
                 <div style={{ padding: 48, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
-              ) : filtered.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
                 <div style={{ padding: 64, textAlign: "center" }}>
                   <div style={{ color: "#D1D5DB", display: "flex", justifyContent: "center", marginBottom: 16 }}><Icons.empty /></div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>No items found</div>
@@ -262,7 +374,7 @@ export default function FoodList() {
                   </thead>
 
                   <tbody>
-                    {filtered.map((it, i) => {
+                    {filteredItems.map((it, i) => {
                       const statusKey = toStatusKey(!!it.is_available);
                       const statusStyle = STATUS_COLORS[statusKey];
                       const thumb = getThumbUrl(it);
@@ -301,7 +413,6 @@ export default function FoodList() {
                             </span>
                           </td>
 
-                          {/* Image preview column */}
                           <td style={{ padding: "10px 24px" }}>
                             {thumb ? (
                               <img
@@ -324,13 +435,38 @@ export default function FoodList() {
                           </td>
 
                           <td style={{ padding: "14px 24px" }}>
-                            <button
-                              className="edit-btn"
-                              onClick={() => navigate(`/admin/menu/edit/${it.item_id}`)}
-                              style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                            >
-                              <Icons.edit /> Edit
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <button
+                                className="edit-btn"
+                                onClick={() => navigate(`/admin/menu/edit/${it.item_id}`)}
+                                style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                              >
+                                <Icons.edit /> Edit
+                              </button>
+
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDelete(it.item_id, it.item_name)}
+                                disabled={deletingId === it.item_id}
+                                style={{
+                                  padding: "7px 16px",
+                                  borderRadius: 8,
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  border: "1.5px solid #FECACA",
+                                  background: "#fff",
+                                  color: "#DC2626",
+                                  cursor: deletingId === it.item_id ? "not-allowed" : "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  opacity: deletingId === it.item_id ? 0.7 : 1,
+                                }}
+                              >
+                                <Icons.delete />
+                                {deletingId === it.item_id ? "Removing..." : "Remove"}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -340,6 +476,139 @@ export default function FoodList() {
               )}
             </div>
 
+            {/* Categories Table */}
+            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#10B981" }} />
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>All Categories</span>
+                  <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 10px", borderRadius: 20 }}>
+                    {filteredCategories.length}
+                  </span>
+                </div>
+
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}>
+                    <Icons.search />
+                  </span>
+                  <input
+                    className="search-input"
+                    style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 240, color: "#111827" }}
+                    placeholder="Search categories..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {categoryLoading ? (
+                <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading categories...</div>
+              ) : categoryError ? (
+                <div style={{ padding: 48, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{categoryError}</div>
+              ) : filteredCategories.length === 0 ? (
+                <div style={{ padding: 64, textAlign: "center" }}>
+                  <div style={{ color: "#D1D5DB", display: "flex", justifyContent: "center", marginBottom: 16 }}><Icons.empty /></div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>No categories found</div>
+                  <div style={{ fontSize: 13, color: "#9CA3AF" }}>Add your first category using the button above.</div>
+                </div>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
+                      {["ID", "Category Name", "Description", "Status", "Action"].map((h) => (
+                        <th key={h} style={{ padding: "12px 24px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredCategories.map((cat, i) => {
+                      const isActive = cat.is_active ?? cat.isActive ?? true;
+
+                      return (
+                        <tr key={cat.category_id} className="row" style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
+                          <td style={{ padding: "14px 24px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>#{cat.category_id}</td>
+
+                          <td style={{ padding: "14px 24px" }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
+                              {cat.category_name}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: "14px 24px", fontSize: 13, color: "#6B7280" }}>
+                            {cat.description || "—"}
+                          </td>
+
+                          <td style={{ padding: "14px 24px" }}>
+                            <span
+                              style={{
+                                background: isActive ? "#D1FAE5" : "#FEE2E2",
+                                color: isActive ? "#065F46" : "#991B1B",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                padding: "4px 12px",
+                                borderRadius: 20,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: "50%",
+                                  background: isActive ? "#10B981" : "#EF4444",
+                                  display: "inline-block",
+                                }}
+                              />
+                              {isActive ? "ACTIVE" : "INACTIVE"}
+                            </span>
+                          </td>
+
+                          <td style={{ padding: "14px 24px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <button
+                                className="edit-btn"
+                                onClick={() => navigate(`/admin/menu/categories/edit/${cat.category_id}`)}
+                                style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                              >
+                                <Icons.edit /> Edit
+                              </button>
+
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDeleteCategory(cat.category_id, cat.category_name)}
+                                disabled={deletingCategoryId === cat.category_id}
+                                style={{
+                                  padding: "7px 16px",
+                                  borderRadius: 8,
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  border: "1.5px solid #FECACA",
+                                  background: "#fff",
+                                  color: "#DC2626",
+                                  cursor: deletingCategoryId === cat.category_id ? "not-allowed" : "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  opacity: deletingCategoryId === cat.category_id ? 0.7 : 1,
+                                }}
+                              >
+                                <Icons.delete />
+                                {deletingCategoryId === cat.category_id ? "Removing..." : "Remove"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       </div>

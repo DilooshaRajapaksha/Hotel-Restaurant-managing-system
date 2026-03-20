@@ -70,7 +70,7 @@ export default function AddFood() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // ✅ checkbox for availability
+    //checkbox for availability
     if (name === "is_available" && type === "checkbox") {
       setForm((prev) => ({ ...prev, is_available: checked }));
       return;
@@ -138,7 +138,7 @@ export default function AddFood() {
       formData.append("item_name", form.item_name.trim());
       formData.append("price", form.price);
 
-      // ✅ checkbox send true/false
+      // checkbox send true/false
       formData.append("is_available", String(form.is_available));
 
       if (form.description?.trim()) formData.append("description", form.description.trim());
@@ -268,14 +268,20 @@ export default function AddFood() {
                       </label>
 
                       <div style={{ position: "relative" }}>
-                        <select className="fi" style={{ ...inp(false), appearance: "none", cursor: "pointer" }} name="category_id" value={form.category_id} onChange={handleChange}>
-                          <option value="">Uncategorized</option>
+                        <select
+                          className="fi"
+                          style={{ ...inp(false), appearance: "none", cursor: "pointer" }}
+                          name="category_id"
+                          value={form.category_id}
+                          onChange={handleChange}
+                        >
                           {categories.map((c) => (
                             <option key={c.category_id} value={c.category_id}>
                               {c.category_name || c.menu_name || `Category #${c.category_id}`}
                             </option>
                           ))}
                         </select>
+
                         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", fontSize: 11, pointerEvents: "none" }}>▼</span>
                       </div>
                     </div>
@@ -306,7 +312,7 @@ export default function AddFood() {
                       {errors.full_price && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.full_price}</span>}
                     </div>
 
-                    {/* ✅ Availability checkbox */}
+                    {/*  Availability checkbox */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10, gridColumn: "1 / -1", marginTop: 6 }}>
                       <input
                         type="checkbox"

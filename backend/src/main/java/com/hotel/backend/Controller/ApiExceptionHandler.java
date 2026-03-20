@@ -1,4 +1,4 @@
-package com.hotel.backend.controller;
+package com.hotel.backend.Controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

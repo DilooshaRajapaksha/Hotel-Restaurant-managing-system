@@ -1,4 +1,4 @@
-package com.hotel.backend.dto;
+package com.hotel.backend.DTO;
 
 import java.math.BigDecimal;
 

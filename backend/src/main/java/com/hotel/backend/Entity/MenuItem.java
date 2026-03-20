@@ -1,4 +1,4 @@
-package com.hotel.backend.entity;
+package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

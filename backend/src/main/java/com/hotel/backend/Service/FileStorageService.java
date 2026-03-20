@@ -1,4 +1,4 @@
-package com.hotel.backend.service;
+package com.hotel.backend.Service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

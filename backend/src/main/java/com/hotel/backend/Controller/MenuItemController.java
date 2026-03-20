@@ -1,12 +1,16 @@
-package com.hotel.backend.controller;
+package com.hotel.backend.Controller;
 
-import com.hotel.backend.dto.MenuItemDTO;
-import com.hotel.backend.service.MenuItemService;
+import com.hotel.backend.DTO.MenuItemDTO;
+import com.hotel.backend.Service.MenuItemService;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/menu-items")
@@ -29,6 +33,23 @@ public class MenuItemController {
     @GetMapping("/{id}")
     public MenuItemDTO getOne(@PathVariable Long id) {
         return service.getItem(id);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteItem(@PathVariable Long id) {
+        try {
+            service.deleteItem(id);
+            return ResponseEntity.ok(Map.of("message", "Menu item deleted successfully."));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "You can't delete this item because it is used in current orders."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to delete menu item."));
+        }
     }
 
     //POST multipart (fields + images)

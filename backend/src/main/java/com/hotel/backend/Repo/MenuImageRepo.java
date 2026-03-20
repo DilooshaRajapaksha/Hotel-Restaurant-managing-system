@@ -1,6 +1,6 @@
-package com.hotel.backend.repo;
+package com.hotel.backend.Repo;
 
-import com.hotel.backend.entity.MenuImage;
+import com.hotel.backend.Entity.MenuImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
