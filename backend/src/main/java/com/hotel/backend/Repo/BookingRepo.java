@@ -12,16 +12,12 @@ import java.util.List;
 @Repository
 public interface BookingRepo extends JpaRepository<Booking, Long> {
 
-    // Find all bookings by status
     List<Booking> findByBookingStatus(Booking.BookingStatus status);
 
-    // Find by room ID
     List<Booking> findByRoomId(Long roomId);
 
-    // Find by user ID
     List<Booking> findByUserId(Long userId);
 
-    // Search by booking ID, room ID, or user ID
     @Query("SELECT b FROM Booking b WHERE " +
             "CAST(b.roomId AS string) LIKE %:keyword% OR " +
             "CAST(b.userId AS string) LIKE %:keyword% OR " +

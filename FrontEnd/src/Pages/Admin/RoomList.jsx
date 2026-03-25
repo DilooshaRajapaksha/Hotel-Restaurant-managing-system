@@ -16,7 +16,7 @@ const Icons = {
   chevron: () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
 };
 
-// ✅ Status colors for AVAILABLE and MAINTENANCE only (team schema)
+
 const STATUS_COLORS = {
   AVAILABLE:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981", label: "Available"   },
   MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Maintenance" },
@@ -179,7 +179,6 @@ export default function RoomList() {
     }
   };
 
-  // ✅ Search by roomName and roomType.roomTypeName
   const filteredRooms = rooms.filter(room =>
     room.roomName?.toLowerCase().includes(search.toLowerCase()) ||
     room.roomType?.roomTypeName?.toLowerCase().includes(search.toLowerCase())
@@ -218,7 +217,7 @@ export default function RoomList() {
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
-          {/* Topbar */}
+          {}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Admin</span>
@@ -241,7 +240,7 @@ export default function RoomList() {
 
           <div style={{ padding: "32px", flex: 1 }}>
 
-            {/* Header */}
+            {}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
               <div>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Room Management</h1>
@@ -253,7 +252,7 @@ export default function RoomList() {
               </button>
             </div>
 
-            {/* ✅ Stats — AVAILABLE and MAINTENANCE only */}
+            {}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
                 { label: "Total Rooms",   value: rooms.length,    color: "#C9A84C" },
@@ -267,7 +266,7 @@ export default function RoomList() {
               ))}
             </div>
 
-            {/* Table card */}
+            {}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -307,47 +306,47 @@ export default function RoomList() {
                       <tr key={room.roomId} className="room-row"
                         style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
 
-                        {/* ✅ roomId */}
+                        {}
                         <td style={{ padding: "14px 20px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>#{room.roomId}</td>
 
-                        {/* Thumbnail */}
+                        {}
                         <td style={{ padding: "10px 20px" }}>
                           <div className="room-thumb"><RoomThumbnail roomId={room.roomId} /></div>
                         </td>
 
-                        {/* Room Name */}
+                        {}
                         <td style={{ padding: "14px 20px" }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{room.roomName}</div>
-                          {/* ✅ Description from roomType.roomDescription */}
+                          {}
                           <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
                             {room.roomType?.roomDescription?.substring(0, 40)}
                             {room.roomType?.roomDescription?.length > 40 ? "..." : ""}
                           </div>
                         </td>
 
-                        {/* ✅ Type from roomType.roomTypeName */}
+                        {}
                         <td style={{ padding: "14px 20px" }}>
                           <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>
                             {room.roomType?.roomTypeName || "—"}
                           </span>
                         </td>
 
-                        {/* ✅ roomPrice */}
+                        {}
                         <td style={{ padding: "14px 20px", fontSize: 13, color: "#374151", fontWeight: 600 }}>
                           Rs. {Number(room.roomPrice || 0).toLocaleString()}
                         </td>
 
-                        {/* ✅ Capacity from roomType.capacity */}
+                        {}
                         <td style={{ padding: "14px 20px", fontSize: 13, color: "#374151", fontWeight: 500 }}>
                           {room.roomType?.capacity || "—"} guests
                         </td>
 
-                        {/* ✅ Status dropdown — AVAILABLE and MAINTENANCE */}
+                        {}
                         <td style={{ padding: "14px 20px" }}>
                           <AvailabilityDropdown room={room} onStatusChange={handleStatusChange} />
                         </td>
 
-                        {/* Actions */}
+                        {}
                         <td style={{ padding: "14px 20px" }}>
                           <div style={{ display: "flex", gap: 8 }}>
                             <button className="edit-btn" onClick={() => navigate(`/admin/rooms/edit/${room.roomId}`)}

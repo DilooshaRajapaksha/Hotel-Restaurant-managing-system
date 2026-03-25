@@ -118,7 +118,7 @@ export default function UpdateRoom() {
               seen.add(t.roomTypeName); return true;
             });
           }
-        } catch { /* use fallback */ }
+        } catch {}
         setRoomTypes(resolvedTypes);
 
         const roomRes = await axios.get(`${BASE_URL}/api/admin/rooms/${id}`);
@@ -287,7 +287,7 @@ export default function UpdateRoom() {
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
-          {/* Topbar */}
+          {}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Admin</span><span style={{ color: "#D1D5DB" }}>›</span>
@@ -389,7 +389,7 @@ export default function UpdateRoom() {
 
                   </div>
 
-                  {/* ✅ Description from room type */}
+                  {}
                   {autoDescription && (
                     <div className="desc-box" style={{ marginTop: 16, background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
                       <span style={{ color: "#C9A84C", marginTop: 1, flexShrink: 0 }}><Icons.info /></span>
@@ -403,7 +403,7 @@ export default function UpdateRoom() {
 
                   <div style={{ height: 1, background: "#F3F4F6", margin: "24px 0" }} />
 
-                  {/* Room Status */}
+                  {}
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Status</p>
                   <div style={{ display: "flex", gap: 12 }}>
                     {[
@@ -423,7 +423,7 @@ export default function UpdateRoom() {
 
                   <div style={{ height: 1, background: "#F3F4F6", margin: "24px 0" }} />
 
-                  {/* Images */}
+                  {}
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Images</p>
                   {existingImages.length > 0 ? (
                     <div style={{ marginBottom: 24 }}>

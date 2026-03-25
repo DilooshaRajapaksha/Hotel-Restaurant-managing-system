@@ -22,7 +22,6 @@ const STATUS_CONFIG = {
 
 const FILTER_TABS = ["ALL", "PENDING", "CONFIRMED", "CANCELLED"];
 
-// ── Status dropdown ────────────────────────────────────────────────────────
 function StatusDropdown({ booking, onStatusChange }) {
   const [open,   setOpen]   = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,7 +76,6 @@ function StatusDropdown({ booking, onStatusChange }) {
   );
 }
 
-// ── Main BookingList ───────────────────────────────────────────────────────
 export default function BookingList() {
   const [bookings,  setBookings]  = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -87,15 +85,14 @@ export default function BookingList() {
   const [toast,     setToast]     = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  // ✅ Maps to store real names
-  const [userNames, setUserNames] = useState({});   // { userId: "John Doe" }
-  const [roomNames, setRoomNames] = useState({});   // { roomId: "Eangle Room" }
+  const [userNames, setUserNames] = useState({});  
+  const [roomNames, setRoomNames] = useState({});   
 
   useEffect(() => { fetchBookings(); }, []);
 
   const fetchBookings = async (isRefresh = false) => {
     try {
-      setError(null); // ✅ always clear previous error before fetching
+      setError(null); 
       if (isRefresh) {
         setRefreshing(true);
         setUserNames({});
@@ -107,7 +104,6 @@ export default function BookingList() {
       const data = res.data || [];
       setBookings(data);
 
-      // ✅ After loading bookings, fetch names for unique user IDs and room IDs
       const uniqueUserIds = [...new Set(data.map(b => b.userId))];
       const uniqueRoomIds = [...new Set(data.map(b => b.roomId))];
 
@@ -121,7 +117,6 @@ export default function BookingList() {
     }
   };
 
-  // ✅ Fetch user first + last name from /api/auth/users/{id} or USER table
   const fetchUserNames = async (userIds) => {
     const names = {};
     await Promise.all(
@@ -131,14 +126,13 @@ export default function BookingList() {
           const u = res.data;
           names[uid] = `${u.firstName || u.first_name || ""} ${u.lastName || u.last_name || ""}`.trim() || `User ${uid}`;
         } catch {
-          names[uid] = `User ${uid}`; // fallback if endpoint not available
+          names[uid] = `User ${uid}`; 
         }
       })
     );
     setUserNames(names);
   };
 
-  // ✅ Fetch room name from /api/admin/rooms/{id}
   const fetchRoomNames = async (roomIds) => {
     const names = {};
     await Promise.all(
@@ -166,7 +160,6 @@ export default function BookingList() {
     setTimeout(() => setToast(""), 3000);
   };
 
-  // ── Filter + Search ──────────────────────────────────────────────────────
   const filtered = bookings.filter(b => {
     const matchTab = tab === "ALL" || b.bookingStatus === tab;
     const kw       = search.toLowerCase();
@@ -180,7 +173,6 @@ export default function BookingList() {
     return matchTab && matchSearch;
   });
 
-  // ── Stats ────────────────────────────────────────────────────────────────
   const stats = {
     total:     bookings.length,
     pending:   bookings.filter(b => b.bookingStatus === "PENDING").length,
@@ -213,7 +205,7 @@ export default function BookingList() {
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
-          {/* Topbar */}
+          {}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Admin</span>
@@ -236,7 +228,7 @@ export default function BookingList() {
 
           <div style={{ padding: "32px", flex: 1 }}>
 
-            {/* Page header */}
+            {}
             <div style={{ marginBottom: 28, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
               <div>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Bookings</h1>
@@ -254,7 +246,7 @@ export default function BookingList() {
               </button>
             </div>
 
-            {/* Stats */}
+            {}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
                 { label: "Total Bookings", value: stats.total,     color: "#C9A84C" },
@@ -269,13 +261,13 @@ export default function BookingList() {
               ))}
             </div>
 
-            {/* Table card */}
+            {}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
-              {/* Toolbar */}
+              {}
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-                  {/* Filter tabs */}
+                  {}
                   <div style={{ display: "flex", gap: 4, background: "#F3F4F6", borderRadius: 10, padding: 4 }}>
                     {FILTER_TABS.map(t => {
                       const active = tab === t;
@@ -289,7 +281,7 @@ export default function BookingList() {
                       );
                     })}
                   </div>
-                  {/* Search — now searches by real name too */}
+                  {}
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}><Icons.search /></span>
                     <input className="search-input"
@@ -299,7 +291,7 @@ export default function BookingList() {
                 </div>
               </div>
 
-              {/* Table */}
+              {}
               {loading ? (
                 <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading bookings...</div>
               ) : error ? (
@@ -325,12 +317,12 @@ export default function BookingList() {
                         <tr key={b.bookingId} className="bk-row"
                           style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
 
-                          {/* Booking ID */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <span style={{ fontWeight: 700, color: "#C9A84C", fontSize: 13 }}>Booking {b.bookingId}</span>
                           </td>
 
-                          {/* ✅ Guest — shows real name with avatar */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#4F46E5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
@@ -345,7 +337,7 @@ export default function BookingList() {
                             </div>
                           </td>
 
-                          {/* ✅ Room — shows real room name */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                               <div style={{ width: 28, height: 28, borderRadius: 6, background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -360,7 +352,7 @@ export default function BookingList() {
                             </div>
                           </td>
 
-                          {/* Check In */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#374151" }}>
                               <Icons.calendar />
@@ -368,7 +360,7 @@ export default function BookingList() {
                             </div>
                           </td>
 
-                          {/* Check Out */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#374151" }}>
                               <Icons.calendar />
@@ -376,26 +368,26 @@ export default function BookingList() {
                             </div>
                           </td>
 
-                          {/* Duration */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>
                               {nightsBetween(b.checkInDate, b.checkOutDate)}
                             </span>
                           </td>
 
-                          {/* Guests */}
+                          {}
                           <td style={{ padding: "16px 20px", fontSize: 13, color: "#374151", fontWeight: 500 }}>
                             {b.numberOfGuest} guest{b.numberOfGuest !== 1 ? "s" : ""}
                           </td>
 
-                          {/* Total Price */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <span style={{ fontWeight: 700, color: "#111827", fontSize: 14 }}>
                               Rs. {Number(b.totalPrice).toLocaleString()}
                             </span>
                           </td>
 
-                          {/* Status dropdown */}
+                          {}
                           <td style={{ padding: "16px 20px" }}>
                             <StatusDropdown booking={b} onStatusChange={handleStatusChange} />
                           </td>

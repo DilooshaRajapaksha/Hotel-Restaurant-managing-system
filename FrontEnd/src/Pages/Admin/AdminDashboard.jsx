@@ -151,7 +151,7 @@ export default function AdminDashboard() {
               <div style={{ padding: 80, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
             ) : (
               <>
-                {/* ── ROW 1: KEY STATS (4 cards) ── */}
+                {}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
                   <StatCard label="Total Revenue"    value={fmtR(data.totalRevenue)}    color="#C9A84C" icon="💰" sub="From confirmed bookings" />
                   <StatCard label="Total Bookings"   value={fmt(data.totalBookings)}    color="#6366F1" icon="📅" sub={`${fmt(data.confirmedBookings)} confirmed`} />
@@ -159,19 +159,19 @@ export default function AdminDashboard() {
                   <StatCard label="Menu Items"       value={fmt(data.totalMenuItems)}   color="#F97316" icon="🍽️" sub={`${fmt(data.totalMenuCategories)} categories`} />
                 </div>
 
-                {/* ── ROW 2: ROOM AVAILABILITY BREAKDOWN ── */}
+                {}
                 <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>🏨 Room Availability</div>
                   <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Current status of all {fmt(data.totalRooms)} rooms</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
 
-                    {/* Total */}
+                    {}
                     <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #C9A84C" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#C9A84C" }}>{fmt(data.totalRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Total Rooms</div>
                     </div>
 
-                    {/* Available */}
+                    {}
                     <div style={{ background: "#F0FDF4", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #10B981" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#10B981" }}>{fmt(data.availableRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Available</div>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Unavailable */}
+                    {}
                     <div style={{ background: "#FFF5F5", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #EF4444" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#EF4444" }}>{fmt(data.unavailableRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Unavailable</div>
@@ -189,7 +189,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Maintenance */}
+                    {}
                     <div style={{ background: "#FFFBEB", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #F59E0B" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#F59E0B" }}>{fmt(data.maintenanceRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Maintenance</div>
@@ -201,10 +201,10 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* ── ROW 3: MONTHLY BOOKINGS CHART + BOOKING STATUS DONUT ── */}
+                {}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
 
-                  {/* Monthly bookings bar chart */}
+                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
                     <BarChart data={Array.from(data.monthlyBookings)} color="#6366F1" />
                   </div>
 
-                  {/* Booking status donut */}
+                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>Booking Status</div>
                     <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Distribution by status</div>
@@ -245,10 +245,10 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* ── ROW 4: REVENUE CHART + QUICK ACTIONS ── */}
+                {}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
 
-                  {/* Monthly revenue bar chart */}
+                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -262,12 +262,12 @@ export default function AdminDashboard() {
                     <BarChart data={Array.from(data.monthlyRevenue).map(Number)} color="#C9A84C" formatValue={fmtR} />
                   </div>
 
-                  {/* Quick Actions — only rooms and bookings */}
+                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>⚡ Quick Actions</div>
                     <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Jump to a section</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {/* ✅ Only rooms and bookings — no menu link */}
+                      {}
                       {[
                         { label: "View All Rooms",    path: "/admin/rooms",    icon: "🏨", sub: `${fmt(data.totalRooms)} rooms total`    },
                         { label: "Add New Room",      path: "/admin/rooms/add",icon: "➕", sub: "Add a new hotel room"                   },
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* ── ROW 5: TOP BOOKED ROOMS ── */}
+                {}
                 <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>🏆 Most Booked Rooms</div>
                   <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Top 5 rooms by total bookings</div>
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {/* ── ROW 6: DARK YEAR SUMMARY ── */}
+                {}
                 <div style={{ background: "linear-gradient(135deg,#0F1923,#1E2D3D)", borderRadius: 14, padding: "28px 32px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
                     📊 {data.currentYear} Year Summary

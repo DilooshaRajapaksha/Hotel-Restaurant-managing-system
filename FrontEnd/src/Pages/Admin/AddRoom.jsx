@@ -24,7 +24,6 @@ const Icons = {
   info: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>),
 };
 
-// ── Add New Type Modal ─────────────────────────────────────────────────────
 function AddTypeModal({ onSave, onClose }) {
   const [newType, setNewType] = useState({ name: "", description: "", capacity: "" });
   const [saving,  setSaving]  = useState(false);
@@ -88,7 +87,6 @@ function AddTypeModal({ onSave, onClose }) {
   );
 }
 
-// ── Main AddRoom ───────────────────────────────────────────────────────────
 export default function AddRoom() {
   const navigate = useNavigate();
 
@@ -101,7 +99,6 @@ export default function AddRoom() {
     roomStatus:   "AVAILABLE",
   });
 
-  // ✅ Auto-filled from selected room type (from ROOM_TYPES table)
   const [autoCapacity,    setAutoCapacity]    = useState(null);
   const [autoDescription, setAutoDescription] = useState(null);
 
@@ -117,7 +114,6 @@ export default function AddRoom() {
     axios.get(`${BASE_URL}/api/admin/rooms/types`)
       .then(res => {
         if (res.data && res.data.length > 0) {
-          // ✅ Deduplicate by name — handles duplicate rows in ROOM_TYPES table
           const seen = new Set();
           const unique = res.data.filter(t => {
             if (seen.has(t.roomTypeName)) return false;
@@ -311,7 +307,7 @@ export default function AddRoom() {
                       {errors.roomName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomName}</span>}
                     </div>
 
-                    {/* ✅ Room Type — with Add New Type option */}
+                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                         Room Type <span style={{ color: "#EF4444" }}>*</span>
@@ -325,7 +321,7 @@ export default function AddRoom() {
                           {roomTypes.map((t, i) => (
                             <option key={`${t.roomTypeName}-${i}`} value={t.roomTypeName}>{t.roomTypeName}</option>
                           ))}
-                          {/* ✅ Add New Type at bottom of dropdown */}
+                          {}
                           <option value="__ADD_NEW__">✦ Add New Room Type...</option>
                         </select>
                         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", pointerEvents: "none", fontSize: 12 }}>▼</span>
@@ -333,7 +329,7 @@ export default function AddRoom() {
                       {errors.roomTypeName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomTypeName}</span>}
                     </div>
 
-                    {/* Room Price */}
+                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Price (Rs.) <span style={{ color: "#EF4444" }}>*</span></label>
                       <div style={{ position: "relative" }}>
@@ -345,8 +341,7 @@ export default function AddRoom() {
                       </div>
                       {errors.roomPrice && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomPrice}</span>}
                     </div>
-
-                    {/* ✅ Capacity — auto-filled from room type */}
+                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                         Capacity <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(auto-filled from room type)</span>
@@ -366,7 +361,7 @@ export default function AddRoom() {
 
                   </div>
 
-                  {/* ✅ Description — auto-filled from room type (read-only display) */}
+                  {}
                   {autoDescription && (
                     <div className="desc-box" style={{ marginTop: 16, background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
                       <span style={{ color: "#C9A84C", marginTop: 1, flexShrink: 0 }}><Icons.info /></span>

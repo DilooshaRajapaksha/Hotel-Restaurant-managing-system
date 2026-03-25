@@ -23,17 +23,14 @@ public class BookingService {
     @Autowired
     private RoomRepo roomRepo;
 
-    // ── Get all bookings ───────────────────────────────────────────────────
     public List<Booking> getAllBookings() {
         return bookingRepo.findAll();
     }
 
-    // ── Get booking by ID ──────────────────────────────────────────────────
     public Optional<Booking> getBookingById(Long id) {
         return bookingRepo.findById(id);
     }
 
-    // ── Get bookings by status ─────────────────────────────────────────────
     public List<Booking> getBookingsByStatus(Booking.BookingStatus status) {
         return bookingRepo.findByBookingStatus(status);
     }
@@ -45,12 +42,10 @@ public class BookingService {
                                  Integer numberOfGuest,
                                  String specialRequest) {
 
-        // 1. Validate room exists
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() -> new RuntimeException(
                         "Room not found with id: " + roomId));
 
-        // 2. Validate dates
         if (!checkOutDate.isAfter(checkInDate)) {
             throw new RuntimeException(
                     "Check-out date must be after check-in date.");
@@ -60,8 +55,6 @@ public class BookingService {
                     "Check-in date cannot be in the past.");
         }
 
-        // 3. Check for overlapping bookings — pass enum values as params
-        //    (avoids the Booking$BookingStatus syntax error in JPQL)
         List<Booking> overlapping = bookingRepo.findOverlappingBookings(
                 roomId,
                 checkInDate,
@@ -78,12 +71,10 @@ public class BookingService {
                             + ". Please choose different dates.");
         }
 
-        // 4. Auto-calculate total price: roomPrice × nights
         long nights = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         BigDecimal totalPrice = room.getRoomPrice()
                 .multiply(BigDecimal.valueOf(nights));
 
-        // 5. Build booking
         Booking booking = new Booking();
         booking.setUserId(userId);
         booking.setRoomId(roomId);
@@ -94,7 +85,6 @@ public class BookingService {
         booking.setTotalPrice(totalPrice);
         booking.setBookingStatus(Booking.BookingStatus.PENDING);
 
-        // 6. Save — catch FK violation for missing user_id in USER table
         try {
             return bookingRepo.save(booking);
         } catch (DataIntegrityViolationException e) {
@@ -104,7 +94,6 @@ public class BookingService {
         }
     }
 
-    // ── Update booking status ──────────────────────────────────────────────
     public Booking updateBookingStatus(Long id, Booking.BookingStatus newStatus) {
         Booking booking = bookingRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException(
@@ -113,12 +102,10 @@ public class BookingService {
         return bookingRepo.save(booking);
     }
 
-    // ── Delete booking ─────────────────────────────────────────────────────
     public void deleteBooking(Long id) {
         bookingRepo.deleteById(id);
     }
 
-    // ── Search bookings ────────────────────────────────────────────────────
     public List<Booking> searchBookings(String keyword) {
         return bookingRepo.searchBookings(keyword);
     }

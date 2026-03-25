@@ -28,13 +28,10 @@ public class RoomService {
 
     private final String UPLOAD_DIR = "uploads/rooms/";
 
-    // ── ROOM TYPES ─────────────────────────────────────────────────────────
-
     public List<RoomType> getAllRoomTypes() {
         return roomTypeRepo.findAll();
     }
 
-    // ✅ Admin can add a new custom room type
     public RoomType addRoomType(String roomTypeName, String roomDescription, Integer capacity) {
         Optional<RoomType> existing = roomTypeRepo.findFirstByRoomTypeName(roomTypeName);
         if (existing.isPresent()) return existing.get();
@@ -45,7 +42,6 @@ public class RoomService {
         return roomTypeRepo.save(rt);
     }
 
-    // ── ROOMS ──────────────────────────────────────────────────────────────
 
     public List<Room> getAllRooms() {
         return roomRepo.findAll();

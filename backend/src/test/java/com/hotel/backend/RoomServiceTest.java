@@ -53,7 +53,6 @@ class RoomServiceTest {
         sampleRoom.setRoomStatus(Room.RoomStatus.AVAILABLE);
     }
 
-    // TC-001: Get all rooms returns a non-empty list
     @Test
     void TC001_getAllRooms_returnsNonEmptyList() {
         when(roomRepo.findAll()).thenReturn(Arrays.asList(sampleRoom));
@@ -66,7 +65,6 @@ class RoomServiceTest {
         System.out.println("TC-001 PASSED ✓ getAllRooms returns non-empty list");
     }
 
-    // TC-002: Get room by valid ID returns correct room
     @Test
     void TC002_getRoomById_validId_returnsRoom() {
         when(roomRepo.findById(1L)).thenReturn(Optional.of(sampleRoom));
@@ -79,7 +77,6 @@ class RoomServiceTest {
         System.out.println("TC-002 PASSED ✓ getRoomById returns correct room");
     }
 
-    // TC-003: Get room by invalid ID returns empty
     @Test
     void TC003_getRoomById_invalidId_returnsEmpty() {
         when(roomRepo.findById(999L)).thenReturn(Optional.empty());
@@ -90,7 +87,6 @@ class RoomServiceTest {
         System.out.println("TC-003 PASSED ✓ getRoomById with invalid ID returns empty");
     }
 
-    // TC-004: Delete room calls repository deleteById
     @Test
     void TC004_deleteRoom_callsRepository() {
         doNothing().when(roomRepo).deleteById(1L);
@@ -101,7 +97,6 @@ class RoomServiceTest {
         System.out.println("TC-004 PASSED ✓ deleteRoom calls deleteById once");
     }
 
-    // TC-005: Room name must not be null or empty
     @Test
     void TC005_roomName_notNullOrEmpty() {
         assertNotNull(sampleRoom.getRoomName());
@@ -109,7 +104,6 @@ class RoomServiceTest {
         System.out.println("TC-005 PASSED ✓ Room name is not null or empty");
     }
 
-    // TC-006: Room price must be positive
     @Test
     void TC006_roomPrice_mustBePositive() {
         assertTrue(sampleRoom.getRoomPrice().compareTo(BigDecimal.ZERO) > 0,
@@ -117,7 +111,6 @@ class RoomServiceTest {
         System.out.println("TC-006 PASSED ✓ Room price is positive");
     }
 
-    // TC-007: Room capacity must be at least 1 (now stored in RoomType)
     @Test
     void TC007_roomCapacity_atLeastOne() {
         assertTrue(sampleRoom.getRoomType().getCapacity() >= 1,
@@ -125,7 +118,6 @@ class RoomServiceTest {
         System.out.println("TC-007 PASSED ✓ Room capacity is at least 1");
     }
 
-    // TC-008: Update room throws exception when room not found
     @Test
     void TC008_updateRoom_invalidId_throwsException() {
         when(roomRepo.findById(999L)).thenReturn(Optional.empty());
@@ -138,7 +130,6 @@ class RoomServiceTest {
         System.out.println("TC-008 PASSED ✓ updateRoom throws exception for invalid ID");
     }
 
-    // TC-009: Update room saves successfully when room found
     @Test
     void TC009_updateRoom_validId_savesSuccessfully() {
         when(roomRepo.findById(1L)).thenReturn(Optional.of(sampleRoom));
@@ -152,7 +143,6 @@ class RoomServiceTest {
         System.out.println("TC-009 PASSED ✓ updateRoom saves successfully");
     }
 
-    // TC-010: Room status must be AVAILABLE or MAINTENANCE
     @Test
     void TC010_roomStatus_validValues() {
         Room.RoomStatus status = sampleRoom.getRoomStatus();
@@ -163,7 +153,6 @@ class RoomServiceTest {
         System.out.println("TC-010 PASSED ✓ Room status is a valid enum value");
     }
 
-    // TC-011: RoomType name must not be null
     @Test
     void TC011_roomType_nameNotNull() {
         assertNotNull(sampleRoom.getRoomType());
@@ -172,7 +161,6 @@ class RoomServiceTest {
         System.out.println("TC-011 PASSED ✓ RoomType name is not null");
     }
 
-    // TC-012: Update room status calls save
     @Test
     void TC012_updateRoomStatus_callsSave() {
         when(roomRepo.findById(1L)).thenReturn(Optional.of(sampleRoom));
