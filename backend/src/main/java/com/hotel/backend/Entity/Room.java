@@ -1,46 +1,35 @@
 package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "rooms")
+@Table(name = "ROOM")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "room_id")
+    private Long roomId;
 
-    @Column(nullable = false)
+    @Column(name = "room_name", nullable = false)
     private String roomName;
 
-    @Column(nullable = false)
-    private String roomType;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "room_type_id", nullable = false)
+    private RoomType roomType;
 
-    @Column(nullable = false)
-    private Double pricePerNight;
+    @Column(name = "room_price", nullable = false)
+    private BigDecimal roomPrice;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "room_status")
+    @Enumerated(EnumType.STRING)
+    private RoomStatus roomStatus = RoomStatus.AVAILABLE;
 
-    @Column(nullable = false)
-    private Integer capacity;
-
-    // Stores amenities as comma-separated string e.g. "WiFi,AC,Balcony"
-    @Column(columnDefinition = "TEXT")
-    private String amenities;
-
-    @Column(nullable = false)
-    private String availability; // "available", "unavailable", "maintenance"
-
-    // Stores image filenames as comma-separated string
-    @Column(columnDefinition = "TEXT")
-    private String images;
-
-    private String media360;
+    public enum RoomStatus {
+        AVAILABLE, MAINTENANCE
+    }
 }

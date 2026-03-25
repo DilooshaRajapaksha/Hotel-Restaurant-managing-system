@@ -9,9 +9,5 @@ import java.util.List;
 @Repository
 public interface RoomRepo extends JpaRepository<Room, Long> {
 
-    // Find rooms by type e.g. "Deluxe"
-    List<Room> findByRoomType(String roomType);
-
-    // Find rooms by availability
-    List<Room> findByAvailability(String availability);
+    List<Room> findByRoomStatus(Room.RoomStatus roomStatus);
 }

@@ -1,16 +1,20 @@
 package com.hotel.backend.Service;
 
+import com.hotel.backend.Entity.HotelImage;
 import com.hotel.backend.Entity.Room;
+import com.hotel.backend.Entity.RoomType;
+import com.hotel.backend.Repo.HotelImageRepo;
 import com.hotel.backend.Repo.RoomRepo;
+import com.hotel.backend.Repo.RoomTypeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,112 +22,134 @@ import java.util.UUID;
 @Service
 public class RoomService {
 
-    @Autowired
-    private RoomRepo roomRepository;
+    @Autowired private RoomRepo       roomRepo;
+    @Autowired private RoomTypeRepo   roomTypeRepo;
+    @Autowired private HotelImageRepo hotelImageRepo;
 
-    // Folder where uploaded images will be saved on the server
     private final String UPLOAD_DIR = "uploads/rooms/";
 
-    // ── Get all rooms ──────────────────────────────────────────────────────
+    // ── ROOM TYPES ─────────────────────────────────────────────────────────
+
+    public List<RoomType> getAllRoomTypes() {
+        return roomTypeRepo.findAll();
+    }
+
+    // ✅ Admin can add a new custom room type
+    public RoomType addRoomType(String roomTypeName, String roomDescription, Integer capacity) {
+        Optional<RoomType> existing = roomTypeRepo.findFirstByRoomTypeName(roomTypeName);
+        if (existing.isPresent()) return existing.get();
+        RoomType rt = new RoomType();
+        rt.setRoomTypeName(roomTypeName);
+        rt.setRoomDescription(roomDescription);
+        rt.setCapacity(capacity);
+        return roomTypeRepo.save(rt);
+    }
+
+    // ── ROOMS ──────────────────────────────────────────────────────────────
+
     public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+        return roomRepo.findAll();
     }
 
-    // ── Get one room by ID ─────────────────────────────────────────────────
     public Optional<Room> getRoomById(Long id) {
-        return roomRepository.findById(id);
+        return roomRepo.findById(id);
     }
 
-    // ── Add new room ───────────────────────────────────────────────────────
     public Room addRoom(String roomName,
-                        String roomType,
-                        Double pricePerNight,
-                        String description,
-                        Integer capacity,
-                        String amenities,
-                        String availability,
-                        List<MultipartFile> images,
-                        MultipartFile media360) throws IOException {
+                        String roomTypeName,
+                        BigDecimal roomPrice,
+                        Room.RoomStatus roomStatus,
+                        List<MultipartFile> images) throws IOException {
+
+        RoomType roomType = roomTypeRepo.findFirstByRoomTypeName(roomTypeName)
+                .orElseThrow(() -> new RuntimeException(
+                        "Room type not found: '" + roomTypeName + "'"));
 
         Room room = new Room();
         room.setRoomName(roomName);
         room.setRoomType(roomType);
-        room.setPricePerNight(pricePerNight);
-        room.setDescription(description);
-        room.setCapacity(capacity);
-        room.setAmenities(amenities);
-        room.setAvailability(availability);
+        room.setRoomPrice(roomPrice);
+        room.setRoomStatus(roomStatus != null ? roomStatus : Room.RoomStatus.AVAILABLE);
 
-        // Save images to local folder
+        Room saved = roomRepo.save(room);
+
         if (images != null && !images.isEmpty()) {
-            List<String> imageNames = new ArrayList<>();
+            boolean first = true;
             for (MultipartFile image : images) {
-                String fileName = saveFile(image, UPLOAD_DIR);
-                imageNames.add(fileName);
+                if (image == null || image.isEmpty()) continue;
+                String fileName = saveFile(image);
+                HotelImage hi = new HotelImage();
+                hi.setRoomId(saved.getRoomId());
+                hi.setRimageUrl("/uploads/rooms/" + fileName);
+                hi.setIsMain(first);
+                hotelImageRepo.save(hi);
+                first = false;
             }
-            room.setImages(String.join(",", imageNames));
         }
-
-        // Save 360 media
-        if (media360 != null && !media360.isEmpty()) {
-            String media360Name = saveFile(media360, UPLOAD_DIR);
-            room.setMedia360(media360Name);
-        }
-
-        return roomRepository.save(room);
+        return saved;
     }
 
-    // ── Update room ────────────────────────────────────────────────────────
     public Room updateRoom(Long id,
                            String roomName,
-                           String roomType,
-                           Double pricePerNight,
-                           String description,
-                           Integer capacity,
-                           String amenities,
-                           String availability,
-                           List<MultipartFile> images,
-                           MultipartFile media360) throws IOException {
+                           String roomTypeName,
+                           BigDecimal roomPrice,
+                           Room.RoomStatus roomStatus,
+                           List<MultipartFile> images) throws IOException {
 
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
+        Room room = roomRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
 
-        if (roomName    != null) room.setRoomName(roomName);
-        if (roomType    != null) room.setRoomType(roomType);
-        if (pricePerNight != null) room.setPricePerNight(pricePerNight);
-        if (description != null) room.setDescription(description);
-        if (capacity    != null) room.setCapacity(capacity);
-        if (amenities   != null) room.setAmenities(amenities);
-        if (availability != null) room.setAvailability(availability);
+        if (roomName   != null && !roomName.isBlank()) room.setRoomName(roomName);
+        if (roomPrice  != null) room.setRoomPrice(roomPrice);
+        if (roomStatus != null) room.setRoomStatus(roomStatus);
+
+        if (roomTypeName != null && !roomTypeName.isBlank()) {
+            RoomType rt = roomTypeRepo.findFirstByRoomTypeName(roomTypeName)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Room type not found: '" + roomTypeName + "'"));
+            room.setRoomType(rt);
+        }
+
+        Room saved = roomRepo.save(room);
 
         if (images != null && !images.isEmpty()) {
-            List<String> imageNames = new ArrayList<>();
             for (MultipartFile image : images) {
-                String fileName = saveFile(image, UPLOAD_DIR);
-                imageNames.add(fileName);
+                if (image == null || image.isEmpty()) continue;
+                String fileName = saveFile(image);
+                HotelImage hi = new HotelImage();
+                hi.setRoomId(saved.getRoomId());
+                hi.setRimageUrl("/uploads/rooms/" + fileName);
+                hi.setIsMain(false);
+                hotelImageRepo.save(hi);
             }
-            room.setImages(String.join(",", imageNames));
         }
-
-        if (media360 != null && !media360.isEmpty()) {
-            String media360Name = saveFile(media360, UPLOAD_DIR);
-            room.setMedia360(media360Name);
-        }
-
-        return roomRepository.save(room);
+        return saved;
     }
 
-    // ── Delete room ────────────────────────────────────────────────────────
+    public Room updateRoomStatus(Long id, Room.RoomStatus newStatus) {
+        Room room = roomRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        room.setRoomStatus(newStatus);
+        return roomRepo.save(room);
+    }
+
+    @Transactional
     public void deleteRoom(Long id) {
-        roomRepository.deleteById(id);
+        roomRepo.deleteById(id);
     }
 
-    // ── Helper: save file to local folder ─────────────────────────────────
-    private String saveFile(MultipartFile file, String directory) throws IOException {
-        Files.createDirectories(Paths.get(directory));
+    public List<HotelImage> getImagesByRoomId(Long roomId) {
+        return hotelImageRepo.findByRoomId(roomId);
+    }
+
+    public void deleteImage(Long imageId) {
+        hotelImageRepo.deleteById(imageId);
+    }
+
+    private String saveFile(MultipartFile file) throws IOException {
+        Files.createDirectories(Paths.get(UPLOAD_DIR));
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path filePath = Paths.get(directory + fileName);
-        Files.write(filePath, file.getBytes());
+        Files.write(Paths.get(UPLOAD_DIR + fileName), file.getBytes());
         return fileName;
     }
 }
