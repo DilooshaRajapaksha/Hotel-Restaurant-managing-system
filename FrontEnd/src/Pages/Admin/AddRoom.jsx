@@ -5,18 +5,21 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8081";
 
-const FALLBACK_ROOM_TYPES = [
-  { roomTypeName: "Two-Bedroom Villa",                capacity: 4, roomDescription: "Bedroom with extra-large double bed, Living area" },
-  { roomTypeName: "Budget Twin Room",                 capacity: 2, roomDescription: "Comfortable room for two guests with double bed" },
-  { roomTypeName: "Double Room with Balcony",         capacity: 2, roomDescription: "Double Bed Room size 28m², features air conditioning" },
-  { roomTypeName: "Triple Room with Balcony",         capacity: 3, roomDescription: "Double Bed Room size 31m², equipped with air conditioning" },
-  { roomTypeName: "Double Room with Private Bathroom",capacity: 2, roomDescription: "Double Bed Room size 25m², features air conditioning" },
-  { roomTypeName: "Triple Room with Bathroom",        capacity: 3, roomDescription: "Triple Room size 31m², features air conditioning" },
-  { roomTypeName: "Family Room",                      capacity: 4, roomDescription: "Large room designed for families with multiple beds" },
+const AMENITIES_LIST = [
+  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
+  "Room Service", "Balcony", "Garden View", "Safe Box",
+  "Free Parking", "Tea/Coffee Maker", "Breakfast Included",
+const ROOM_TYPES = ["Standard", "Deluxe", "Suite", "Family Room", "Executive", "Penthouse"];
+const AMENITIES_LIST = [
+  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
+  "Room Service", "Balcony", "Sea View", "Garden View",
+  "Jacuzzi", "King Size Bed", "Safe Box", "Hair Dryer",
 ];
 
 const Icons = {
   upload: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>),
+  globe: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>),
+  check: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
   xIcon: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   arrowLeft: () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>),
@@ -105,52 +108,23 @@ export default function AddRoom() {
   const [errors,        setErrors]        = useState({});
   const [images,        setImages]        = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [submitStatus,  setSubmitStatus]  = useState(null);
-  const [isLoading,     setIsLoading]     = useState(false);
-
-  useEffect(() => { loadRoomTypes(); }, []);
-
-  const loadRoomTypes = () => {
-    axios.get(`${BASE_URL}/api/admin/rooms/types`)
-      .then(res => {
-        if (res.data && res.data.length > 0) {
-          const seen = new Set();
-          const unique = res.data.filter(t => {
-            if (seen.has(t.roomTypeName)) return false;
-            seen.add(t.roomTypeName); return true;
-          });
-          setRoomTypes(unique);
-        }
-        else setRoomTypes(FALLBACK_ROOM_TYPES);
-      })
-      .catch(() => setRoomTypes(FALLBACK_ROOM_TYPES));
-  };
-
-  const handleNewTypeSaved = (savedType) => {
-    setRoomTypes(prev => [...prev, savedType]);
-    setForm(prev => ({ ...prev, roomTypeName: savedType.roomTypeName }));
-    setAutoCapacity(savedType.capacity);
-    setAutoDescription(savedType.roomDescription);
-    setShowTypeModal(false);
-  };
-
-  const handleTypeChange = (e) => {
-    const selectedName = e.target.value;
-    if (selectedName === "__ADD_NEW__") { setShowTypeModal(true); return; }
-    setForm(prev => ({ ...prev, roomTypeName: selectedName }));
-    if (errors.roomTypeName) setErrors(prev => ({ ...prev, roomTypeName: "" }));
-    if (!selectedName) { setAutoCapacity(null); setAutoDescription(null); return; }
-    const found = roomTypes.find(t => t.roomTypeName === selectedName);
-    if (found) {
-      setAutoCapacity(found.capacity);
-      setAutoDescription(found.roomDescription);
-    }
-  };
+  const [media360, setMedia360] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  }
+  if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+};
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const toggleAmenity = (amenity) => {
+    setForm(prev => ({ ...prev, amenities: prev.amenities.includes(amenity) ? prev.amenities.filter(a => a !== amenity) : [...prev.amenities, amenity] }));
   };
 
   const handleImageUpload = (e) => {
@@ -163,10 +137,9 @@ export default function AddRoom() {
     setImagePreviews(files.map(f => URL.createObjectURL(f)));
   };
 
-  const removeImage = (index) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-  };
+  
+  const handle360Upload = (e) => { const file = e.target.files[0]; if (file) setMedia360(file.name); };
+  const removeImage = (index) => { setImages(prev => prev.filter((_, i) => i !== index)); setImagePreviews(prev => prev.filter((_, i) => i !== index)); };
 
   const validate = () => {
     const e = {};
@@ -361,15 +334,20 @@ export default function AddRoom() {
 
                   </div>
 
-                  {}
-                  {autoDescription && (
-                    <div className="desc-box" style={{ marginTop: 16, background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <span style={{ color: "#C9A84C", marginTop: 1, flexShrink: 0 }}><Icons.info /></span>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#92400E", marginBottom: 3 }}>Room Type Description</div>
-                        <div style={{ fontSize: 13, color: "#92400E", lineHeight: 1.5 }}>{autoDescription}</div>
-                        <div style={{ fontSize: 12, color: "#B45309", marginTop: 4 }}>
-                          Max capacity: <strong>{autoCapacity} guest{autoCapacity > 1 ? "s" : ""}</strong>
+                  <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
+
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Facilities</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Amenities</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                    {AMENITIES_LIST.map(amenity => {
+                      const sel = form.amenities.includes(amenity);
+                      return (
+                        <div key={amenity} className="ac" onClick={() => toggleAmenity(amenity)}
+                          style={{ padding: "9px 12px", borderRadius: 8, fontSize: 13, display: "flex", alignItems: "center", gap: 8, border: `1.5px solid ${sel ? "#C9A84C" : "#E5E7EB"}`, background: sel ? "#FFFBEB" : "#FAFAFA", color: sel ? "#92400E" : "#4B5563", fontWeight: sel ? 600 : 400, cursor: "pointer", userSelect: "none", transition: "all 0.15s" }}>
+                          <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, background: sel ? "#C9A84C" : "transparent", border: `1.5px solid ${sel ? "#C9A84C" : "#D1D5DB"}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                            {sel && <Icons.check />}
+                          </div>
+                          {amenity}
                         </div>
                       </div>
                     </div>
@@ -395,36 +373,49 @@ export default function AddRoom() {
                     })}
                   </div>
 
-                  <div style={{ height: 1, background: "#F3F4F6", margin: "24px 0" }} />
+                  <div style={{ height: 1, background: "#F3F4F6", margin: "28px 0" }} />
 
-                  {/* Images */}
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Images</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 580 }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
-                      Upload Photos <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(optional — first image will be set as main)</span>
-                    </label>
-                    <label htmlFor="roomImages">
-                      <div className="uz" style={{ border: `2px dashed ${errors.images ? "#FCA5A5" : "#D1D5DB"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", background: "#FAFAFA", cursor: "pointer", transition: "all 0.18s" }}>
-                        <div style={{ display: "flex", justifyContent: "center", color: "#9CA3AF", marginBottom: 10 }}><Icons.upload /></div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Click to upload photos</div>
-                        <div style={{ fontSize: 12, color: "#9CA3AF" }}>JPG, PNG, WEBP · Max 5MB each</div>
-                      </div>
-                    </label>
-                    <input id="roomImages" type="file" accept="image/*" multiple onChange={handleImageUpload} />
-                    {errors.images && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.images}</span>}
-                    {imagePreviews.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
-                        {imagePreviews.map((src, i) => (
-                          <div key={i} style={{ position: "relative", width: 80, height: 80 }}>
-                            <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: `2px solid ${i === 0 ? "#C9A84C" : "#E5E7EB"}` }} />
-                            {i === 0 && <span style={{ position: "absolute", bottom: 2, left: 2, background: "#C9A84C", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 4 }}>MAIN</span>}
-                            <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
-                              <Icons.xIcon />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 18 }}>Room Images & Media</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px 24px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 24px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Images <span style={{ color: "#EF4444" }}>*</span></label>
+                      <label htmlFor="roomImages">
+                        <div className="uz" style={{ border: `2px dashed ${errors.images ? "#FCA5A5" : "#D1D5DB"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", background: "#FAFAFA", cursor: "pointer" }}>
+                          <div style={{ display: "flex", justifyContent: "center", color: "#9CA3AF", marginBottom: 8 }}><Icons.upload /></div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Click to upload photos</div>
+                          <div style={{ fontSize: 12, color: "#9CA3AF" }}>JPG, PNG, WEBP · Max 5MB each</div>
+                        </div>
+                      </label>
+                      <input id="roomImages" type="file" accept="image/*" multiple onChange={handleImageUpload} />
+                      {errors.images && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.images}</span>}
+                      {imagePreviews.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+                          {imagePreviews.map((src, i) => (
+                            <div key={i} style={{ position: "relative", width: 80, height: 80 }}>
+                              <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #E5E7EB" }} />
+                              <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
+                                <Icons.xIcon />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+      
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>360° / 3D Media <span style={{ color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></label>
+                      <label htmlFor="media360">
+                        <div className="uz" style={{ border: "2px dashed #D1D5DB", borderRadius: 12, padding: "28px 20px", textAlign: "center", background: "#FAFAFA", cursor: "pointer" }}>
+                          <div style={{ display: "flex", justifyContent: "center", color: "#9CA3AF", marginBottom: 8 }}><Icons.globe /></div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Upload 360° tour</div>
+                          <div style={{ fontSize: 12, color: "#9CA3AF" }}>MP4, equirectangular JPG · Max 50MB</div>
+                        </div>
+                      </label>
+                      <input id="media360" type="file" accept="video/*,image/*" onChange={handle360Upload} />
+                      {media360 && <div style={{ padding: "8px 12px", background: "#ECFDF5", borderRadius: 8, fontSize: 13, color: "#065F46", border: "1px solid #6EE7B7" }}>✓ {media360}</div>}
+                    </div>
                   </div>
                 </div>
 
