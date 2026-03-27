@@ -1,0 +1,26 @@
+.rdrCalendarWrapper {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.rdrMonth {
+  padding: 0 8px;
+}
+
+.rdrDayNumber span {
+  color: #333;
+}
+
+.rdrInRange, .rdrStartEdge, .rdrEndEdge {
+  background: #fdfaf2 !important;
+  border-color: #d4af37 !important;
+}
+
+.rdrDayToday span {
+  color: #d4af37 !important;
+  font-weight: bold;
+}
+
+.rdrSelected, .rdrInRange {
+  background: #d4af37 !important;
+  color: white !important;
+}
