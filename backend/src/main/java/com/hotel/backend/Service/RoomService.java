@@ -1,8 +1,10 @@
 package com.hotel.backend.Service;
 
+import com.hotel.backend.Entity.Booking;
 import com.hotel.backend.Entity.HotelImage;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.RoomType;
+import com.hotel.backend.Repo.BookingRepo;
 import com.hotel.backend.Repo.HotelImageRepo;
 import com.hotel.backend.Repo.RoomRepo;
 import com.hotel.backend.Repo.RoomTypeRepo;
@@ -25,6 +27,7 @@ public class RoomService {
     @Autowired private RoomRepo       roomRepo;
     @Autowired private RoomTypeRepo   roomTypeRepo;
     @Autowired private HotelImageRepo hotelImageRepo;
+    @Autowired private BookingRepo    bookingRepo;
 
     private final String UPLOAD_DIR = "uploads/rooms/";
 
@@ -41,7 +44,6 @@ public class RoomService {
         rt.setCapacity(capacity);
         return roomTypeRepo.save(rt);
     }
-
 
     public List<Room> getAllRooms() {
         return roomRepo.findAll();
@@ -131,6 +133,23 @@ public class RoomService {
 
     @Transactional
     public void deleteRoom(Long id) {
+        // Check room exists
+        roomRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
+
+        boolean hasActive = bookingRepo.hasActiveBookings(
+                id,
+                Booking.BookingStatus.PENDING,
+                Booking.BookingStatus.CONFIRMED
+        );
+
+        if (hasActive) {
+            throw new RuntimeException(
+                    "Cannot delete this room. It has active bookings (PENDING or CONFIRMED). " +
+                            "Please cancel all bookings for this room before deleting it."
+            );
+        }
+
         roomRepo.deleteById(id);
     }
 

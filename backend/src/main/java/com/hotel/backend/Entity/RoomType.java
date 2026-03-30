@@ -21,4 +21,7 @@ public class RoomType {
 
     @Column(name = "capacity", nullable = false)
     private Integer capacity;
+
+    public int getCapacity() { return capacity; }
+    public void setCapacity(int capacity) { this.capacity = capacity; }
 }

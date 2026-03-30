@@ -22,7 +22,6 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
 
-    // GET all room types
     @GetMapping("/types")
     public ResponseEntity<List<RoomType>> getAllRoomTypes() {
         return ResponseEntity.ok(roomService.getAllRoomTypes());
@@ -111,8 +110,12 @@ public class RoomController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteRoom(@PathVariable Long id) {
-        roomService.deleteRoom(id);
-        return ResponseEntity.ok("Room deleted successfully");
+        try {
+            roomService.deleteRoom(id);
+            return ResponseEntity.ok("Room deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/images/{imageId}")

@@ -1,18 +1,51 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../Utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 const FALLBACK_ROOM_TYPES = [
-  { roomTypeName: "Two-Bedroom Villa",                capacity: 4, roomDescription: "Bedroom with extra-large double bed, Living area" },
-  { roomTypeName: "Budget Twin Room",                 capacity: 2, roomDescription: "Comfortable room for two guests with double bed" },
-  { roomTypeName: "Double Room with Balcony",         capacity: 2, roomDescription: "Double Bed Room size 28m², features air conditioning" },
-  { roomTypeName: "Triple Room with Balcony",         capacity: 3, roomDescription: "Double Bed Room size 31m², equipped with air conditioning" },
-  { roomTypeName: "Double Room with Private Bathroom",capacity: 2, roomDescription: "Double Bed Room size 25m², features air conditioning" },
-  { roomTypeName: "Triple Room with Bathroom",        capacity: 3, roomDescription: "Triple Room size 31m², features air conditioning" },
-  { roomTypeName: "Family Room",                      capacity: 4, roomDescription: "Large room designed for families with multiple beds" },
+  { roomTypeName: "Two-Bedroom Villa",                        capacity: 4 },
+  { roomTypeName: "Single Double Bed with Private Bathroom",  capacity: 2 },
+  { roomTypeName: "Double Room with Balcony",                 capacity: 2 },
+  { roomTypeName: "Triple Room with Balcony",                 capacity: 3 },
+  { roomTypeName: "Double Room with Private Bathroom",        capacity: 2 },
+  { roomTypeName: "Triple Room with Bathroom",                capacity: 3 },
+  { roomTypeName: "Family Room",                              capacity: 4 },
+];
+
+const FACILITY_CATEGORIES = [
+  {
+    category: "General",
+    icon: "🏨",
+    items: ["WiFi", "Free WiFi", "Air Conditioning", "TV", "Room Service", "Daily Housekeeping", "Ironing Service"],
+  },
+  {
+    category: "Room Features",
+    icon: "🛏️",
+    items: ["Mini Bar", "Balcony", "Private Bathroom", "Shower", "Tea/Coffee Maker", "Socket Near the Bed", "Clothes Rack", "Electric Kettle"],
+  },
+  {
+    category: "Views & Outdoors",
+    icon: "🌿",
+    items: ["Sea View", "Garden View", "Outdoor Furniture", "Garden", "Parking", "Free Parking"],
+  },
+  {
+    category: "Family & Entertainment",
+    icon: "👨‍👩‍👧",
+    items: ["Family Rooms", "Board Games / Puzzles", "Breakfast Included", "Washing Machine", "Kitchen"],
+  },
+  {
+    category: "Activities & Tours",
+    icon: "🚴",
+    items: ["Bicycle Rental", "Cooking Class", "Walking Tours", "Bike Tours", "Tour Desk", "Happy Hour", "Local Culture Class"],
+  },
+  {
+    category: "Laundry",
+    icon: "👕",
+    items: ["Laundry Service", "Washing Machine"],
+  },
 ];
 
 const Icons = {
@@ -21,7 +54,7 @@ const Icons = {
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   arrowLeft: () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>),
   users: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>),
-  info: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>),
+  check: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
 };
 
 function AddTypeModal({ onSave, onClose }) {
@@ -32,22 +65,24 @@ function AddTypeModal({ onSave, onClose }) {
   const handleSave = async () => {
     if (!newType.name.trim())   { setError("Type name is required."); return; }
     if (!newType.capacity)      { setError("Capacity is required."); return; }
-    if (isNaN(newType.capacity) || Number(newType.capacity) < 1)
-      { setError("Capacity must be at least 1."); return; }
+    if (isNaN(newType.capacity) || Number(newType.capacity) < 1) { setError("Capacity must be at least 1."); return; }
     setSaving(true);
     try {
       const formData = new FormData();
       formData.append("roomTypeName",    newType.name.trim());
       formData.append("roomDescription", newType.description.trim() || newType.name.trim());
       formData.append("capacity",        newType.capacity);
-      const res = await axios.post(`${BASE_URL}/api/admin/rooms/types`, formData);
+      const res = await api.post(`${BASE_URL}/api/admin/rooms/types`, formData);
       onSave(res.data);
-    } catch {
-      setError("Failed to save. Please try again.");
-    } finally { setSaving(false); }
+    } catch { setError("Failed to save. Please try again."); }
+    finally { setSaving(false); }
   };
 
-  const minp = { padding: "9px 12px", borderRadius: 8, fontSize: 13, width: "100%", border: "1.5px solid #E5E7EB", background: "#FAFAFA", color: "#111827", fontFamily: "inherit" };
+  const minp = {
+    padding: "9px 12px", borderRadius: 8, fontSize: 13, width: "100%",
+    border: "1.5px solid #E5E7EB", background: "#FAFAFA", color: "#111827", fontFamily: "inherit",
+    outline: "none", transition: "border-color 0.15s",
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -57,33 +92,62 @@ function AddTypeModal({ onSave, onClose }) {
             <h3 style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 2 }}>Add New Room Type</h3>
             <p style={{ fontSize: 12, color: "#9CA3AF" }}>Saved to ROOM_TYPES table in database</p>
           </div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "#6B7280" }}><Icons.xIcon /></button>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "#6B7280" }}>
+            <Icons.xIcon />
+          </button>
         </div>
-        {error && <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#991B1B", fontSize: 13 }}>⚠ {error}</div>}
+
+        {error && (
+          <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#991B1B", fontSize: 13 }}>
+            ⚠ {error}
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Type Name <span style={{ color: "#EF4444" }}>*</span></label>
-            <input style={minp} placeholder="e.g. Penthouse Suite" value={newType.name} onChange={e => { setNewType(p => ({...p, name: e.target.value})); setError(""); }} />
+            <input style={minp} placeholder="e.g. Penthouse Suite"
+              value={newType.name} onChange={e => { setNewType(p => ({...p, name: e.target.value})); setError(""); }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Max Capacity (guests) <span style={{ color: "#EF4444" }}>*</span></label>
-            <input style={minp} type="number" min="1" max="20" placeholder="e.g. 4" value={newType.capacity} onChange={e => { setNewType(p => ({...p, capacity: e.target.value})); setError(""); }} />
+            <input style={minp} type="number" min="1" max="20" placeholder="e.g. 4"
+              value={newType.capacity} onChange={e => { setNewType(p => ({...p, capacity: e.target.value})); setError(""); }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Description <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>(optional)</span></label>
-            <textarea style={{ ...minp, resize: "vertical", minHeight: 72 }}
+            <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+              Description <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea style={{ ...minp, resize: "vertical", minHeight: 72, lineHeight: 1.5 }}
               placeholder="e.g. Luxury penthouse with rooftop terrace and panoramic views"
               value={newType.description} onChange={e => setNewType(p => ({...p, description: e.target.value}))} />
           </div>
         </div>
+
         <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>Cancel</button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: saving ? "#9CA3AF" : "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: saving ? "not-allowed" : "pointer" }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}>
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: saving ? "#9CA3AF" : "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
             {saving ? "Saving..." : "Save Type"}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function FacilityCheckbox({ label, checked, onChange }) {
+  return (
+    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
+      <div onClick={onChange}
+        style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${checked ? "#C9A84C" : "#D1D5DB"}`, background: checked ? "#C9A84C" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s", cursor: "pointer" }}>
+        {checked && <span style={{ color: "#fff" }}><Icons.check /></span>}
+      </div>
+      <span style={{ fontSize: 13, color: checked ? "#92400E" : "#374151", fontWeight: checked ? 600 : 400, transition: "all 0.15s" }}>{label}</span>
+    </label>
   );
 }
 
@@ -94,14 +158,14 @@ export default function AddRoom() {
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [form, setForm] = useState({
     roomName:     "",
+    description:  "",   
     roomTypeName: "",
     roomPrice:    "",
     roomStatus:   "AVAILABLE",
   });
 
-  const [autoCapacity,    setAutoCapacity]    = useState(null);
-  const [autoDescription, setAutoDescription] = useState(null);
-
+  const [autoCapacity,  setAutoCapacity]  = useState(null);
+  const [facilities,    setFacilities]    = useState({});   
   const [errors,        setErrors]        = useState({});
   const [images,        setImages]        = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -111,7 +175,7 @@ export default function AddRoom() {
   useEffect(() => { loadRoomTypes(); }, []);
 
   const loadRoomTypes = () => {
-    axios.get(`${BASE_URL}/api/admin/rooms/types`)
+    api.get(`${BASE_URL}/api/admin/rooms/types`)
       .then(res => {
         if (res.data && res.data.length > 0) {
           const seen = new Set();
@@ -120,31 +184,31 @@ export default function AddRoom() {
             seen.add(t.roomTypeName); return true;
           });
           setRoomTypes(unique);
+        } else {
+          setRoomTypes(FALLBACK_ROOM_TYPES);
         }
-        else setRoomTypes(FALLBACK_ROOM_TYPES);
       })
       .catch(() => setRoomTypes(FALLBACK_ROOM_TYPES));
   };
 
   const handleNewTypeSaved = (savedType) => {
-    setRoomTypes(prev => [...prev, savedType]);
+    setRoomTypes(prev => {
+      const exists = prev.find(t => t.roomTypeName === savedType.roomTypeName);
+      return exists ? prev : [...prev, savedType];
+    });
     setForm(prev => ({ ...prev, roomTypeName: savedType.roomTypeName }));
     setAutoCapacity(savedType.capacity);
-    setAutoDescription(savedType.roomDescription);
     setShowTypeModal(false);
   };
 
   const handleTypeChange = (e) => {
-    const selectedName = e.target.value;
-    if (selectedName === "__ADD_NEW__") { setShowTypeModal(true); return; }
-    setForm(prev => ({ ...prev, roomTypeName: selectedName }));
+    const val = e.target.value;
+    if (val === "__ADD_NEW__") { setShowTypeModal(true); return; }
+    setForm(prev => ({ ...prev, roomTypeName: val }));
     if (errors.roomTypeName) setErrors(prev => ({ ...prev, roomTypeName: "" }));
-    if (!selectedName) { setAutoCapacity(null); setAutoDescription(null); return; }
-    const found = roomTypes.find(t => t.roomTypeName === selectedName);
-    if (found) {
-      setAutoCapacity(found.capacity);
-      setAutoDescription(found.roomDescription);
-    }
+    if (!val) { setAutoCapacity(null); return; }
+    const found = roomTypes.find(t => t.roomTypeName === val);
+    setAutoCapacity(found ? found.capacity : null);
   };
 
   const handleChange = (e) => {
@@ -153,11 +217,19 @@ export default function AddRoom() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
+  const toggleFacility = (item) => {
+    setFacilities(prev => ({ ...prev, [item]: !prev[item] }));
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (files.some(f => !validTypes.includes(f.type))) { setErrors(prev => ({ ...prev, images: "Only JPG, PNG, and WEBP images are allowed." })); return; }
-    if (files.some(f => f.size > 5 * 1024 * 1024))    { setErrors(prev => ({ ...prev, images: "Each image must be under 5MB." })); return; }
+    if (files.some(f => !validTypes.includes(f.type))) {
+      setErrors(prev => ({ ...prev, images: "Only JPG, PNG, and WEBP images are allowed." })); return;
+    }
+    if (files.some(f => f.size > 5 * 1024 * 1024)) {
+      setErrors(prev => ({ ...prev, images: "Each image must be under 5MB." })); return;
+    }
     setErrors(prev => ({ ...prev, images: "" }));
     setImages(files);
     setImagePreviews(files.map(f => URL.createObjectURL(f)));
@@ -194,20 +266,19 @@ export default function AddRoom() {
       formData.append("roomStatus",   form.roomStatus);
       images.forEach(img => formData.append("images", img));
 
-      await axios.post(`${BASE_URL}/api/admin/rooms`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.post(`${BASE_URL}/api/admin/rooms`, formData);
       setSubmitStatus("success");
       setTimeout(() => handleReset(), 2200);
-    } catch {
+    } catch (err) {
       setSubmitStatus("error");
-      setErrors({ general: "Failed to save room. Make sure the backend is running." });
+      const msg = err.response?.data || "Failed to save room. Make sure the backend is running.";
+      setErrors({ general: msg });
     } finally { setIsLoading(false); }
   };
 
   const handleReset = () => {
-    setForm({ roomName: "", roomTypeName: "", roomPrice: "", roomStatus: "AVAILABLE" });
-    setAutoCapacity(null); setAutoDescription(null);
+    setForm({ roomName: "", description: "", roomTypeName: "", roomPrice: "", roomStatus: "AVAILABLE" });
+    setAutoCapacity(null); setFacilities({});
     setImages([]); setImagePreviews([]); setErrors({});
     setSubmitStatus(null); setIsLoading(false);
   };
@@ -216,8 +287,11 @@ export default function AddRoom() {
     padding: "10px 14px", borderRadius: 8, fontSize: 14, width: "100%",
     border: `1.5px solid ${hasError ? "#FCA5A5" : "#E5E7EB"}`,
     background: hasError ? "#FFF5F5" : "#FAFAFA",
-    color: "#111827", fontFamily: "inherit", ...extra,
+    color: "#111827", fontFamily: "inherit", outline: "none",
+    transition: "border-color 0.15s, background 0.15s", ...extra,
   });
+
+  const selectedCount = Object.values(facilities).filter(Boolean).length;
 
   return (
     <>
@@ -225,7 +299,7 @@ export default function AddRoom() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
-        .fi:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
+        .fi:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
         .fi { transition: border-color 0.18s, background 0.18s; }
         .uz:hover { border-color: #C9A84C !important; background: #FFFBEB !important; }
         .br:hover { background: #F3F4F6 !important; border-color: #C9A84C !important; }
@@ -237,8 +311,6 @@ export default function AddRoom() {
         @keyframes slideUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn  { from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)} }
         .toast { animation: slideUp 0.3s ease; }
-        .desc-box { animation: fadeIn 0.2s ease; }
-        .cap-box  { animation: fadeIn 0.2s ease; }
       `}</style>
 
       {showTypeModal && <AddTypeModal onSave={handleNewTypeSaved} onClose={() => setShowTypeModal(false)} />}
@@ -250,8 +322,7 @@ export default function AddRoom() {
           {/* Topbar */}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
+              <span style={{ color: "#9CA3AF" }}>Admin</span><span style={{ color: "#D1D5DB" }}>›</span>
               <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/admin/rooms")}>Room Management</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
               <span style={{ color: "#111827", fontWeight: 600 }}>Add New Room</span>
@@ -288,6 +359,7 @@ export default function AddRoom() {
             <form onSubmit={handleSubmit} noValidate>
               <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
+                {}
                 <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
                   <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Room Details</span>
@@ -298,11 +370,11 @@ export default function AddRoom() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 28px" }}>
 
-                    {/* Room Name */}
+                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Name <span style={{ color: "#EF4444" }}>*</span></label>
                       <input className="fi" style={inp(!!errors.roomName)} type="text"
-                        name="roomName" placeholder="e.g. Eangle Room"
+                        name="roomName" placeholder="e.g. Eagle Room"
                         value={form.roomName} onChange={handleChange} />
                       {errors.roomName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomName}</span>}
                     </div>
@@ -311,7 +383,7 @@ export default function AddRoom() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                         Room Type <span style={{ color: "#EF4444" }}>*</span>
-                        <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(capacity + description auto-fills)</span>
+                        <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(capacity auto-fills)</span>
                       </label>
                       <div style={{ position: "relative" }}>
                         <select className="fi"
@@ -321,7 +393,6 @@ export default function AddRoom() {
                           {roomTypes.map((t, i) => (
                             <option key={`${t.roomTypeName}-${i}`} value={t.roomTypeName}>{t.roomTypeName}</option>
                           ))}
-                          {}
                           <option value="__ADD_NEW__">✦ Add New Room Type...</option>
                         </select>
                         <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", pointerEvents: "none", fontSize: 12 }}>▼</span>
@@ -334,19 +405,20 @@ export default function AddRoom() {
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Price (Rs.) <span style={{ color: "#EF4444" }}>*</span></label>
                       <div style={{ position: "relative" }}>
                         <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF", fontSize: 13, fontWeight: 600, pointerEvents: "none" }}>Rs.</span>
-                        <input className="fi"
-                          style={inp(!!errors.roomPrice, { paddingLeft: 46 })} type="number"
+                        <input className="fi" style={inp(!!errors.roomPrice, { paddingLeft: 46 })} type="number"
                           name="roomPrice" placeholder="e.g. 7500"
                           value={form.roomPrice} onChange={handleChange} min="0" step="0.01" />
                       </div>
                       {errors.roomPrice && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomPrice}</span>}
                     </div>
+
                     {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
-                        Capacity <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(auto-filled from room type)</span>
+                        Capacity
+                        <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(auto-filled from room type)</span>
                       </label>
-                      <div className={autoCapacity ? "cap-box" : ""} style={{
+                      <div style={{
                         display: "flex", alignItems: "center", gap: 10,
                         padding: "10px 14px", borderRadius: 8, fontSize: 14,
                         border: `1.5px solid ${autoCapacity ? "#C9A84C" : "#E5E7EB"}`,
@@ -362,22 +434,27 @@ export default function AddRoom() {
                   </div>
 
                   {}
-                  {autoDescription && (
-                    <div className="desc-box" style={{ marginTop: 16, background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <span style={{ color: "#C9A84C", marginTop: 1, flexShrink: 0 }}><Icons.info /></span>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#92400E", marginBottom: 3 }}>Room Type Description</div>
-                        <div style={{ fontSize: 13, color: "#92400E", lineHeight: 1.5 }}>{autoDescription}</div>
-                        <div style={{ fontSize: 12, color: "#B45309", marginTop: 4 }}>
-                          Max capacity: <strong>{autoCapacity} guest{autoCapacity > 1 ? "s" : ""}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                      Room Description
+                      <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(optional — specific details about this room)</span>
+                    </label>
+                    <textarea className="fi"
+                      style={{ ...inp(false), resize: "vertical", minHeight: 90, lineHeight: 1.6, padding: "10px 14px" }}
+                      name="description"
+                      placeholder="e.g. Room size 28 m², The spacious double room features air conditioning, a flat-screen TV, and a private balcony with garden views. Guests can enjoy free WiFi and a minibar..."
+                      value={form.description} onChange={handleChange} />
+                    <span style={{ fontSize: 11, color: "#9CA3AF" }}>
+                      ℹ This will be saved once Diloosha adds the description column to the ROOM table during merge.
+                    </span>
+                  </div>
 
-                  <div style={{ height: 1, background: "#F3F4F6", margin: "24px 0" }} />
+                </div>
 
-                  {/* Room Status */}
+                <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
+
+                {}
+                <div style={{ padding: "24px 28px" }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Status</p>
                   <div style={{ display: "flex", gap: 12 }}>
                     {[
@@ -394,14 +471,66 @@ export default function AddRoom() {
                       );
                     })}
                   </div>
+                </div>
 
-                  <div style={{ height: 1, background: "#F3F4F6", margin: "24px 0" }} />
+                <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
 
-                  {/* Images */}
+                {}
+                <div style={{ padding: "24px 28px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase" }}>Facilities & Amenities</p>
+                    {selectedCount > 0 && (
+                      <span style={{ background: "#C9A84C", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10 }}>
+                        {selectedCount} selected
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    {FACILITY_CATEGORIES.map(cat => (
+                      <div key={cat.category}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                          <span style={{ fontSize: 16 }}>{cat.icon}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{cat.category}</span>
+                          <div style={{ flex: 1, height: 1, background: "#F3F4F6" }} />
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "4px 24px" }}>
+                          {cat.items.map(item => (
+                            <FacilityCheckbox
+                              key={item} label={item}
+                              checked={!!facilities[item]}
+                              onChange={() => toggleFacility(item)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedCount > 0 && (
+                    <div style={{ marginTop: 20, padding: "12px 16px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#92400E", marginBottom: 6 }}>Selected Facilities:</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {Object.entries(facilities).filter(([,v]) => v).map(([k]) => (
+                          <span key={k} style={{ background: "#FEF3C7", color: "#92400E", fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20, display: "flex", alignItems: "center", gap: 5 }}>
+                            {k}
+                            <span onClick={() => toggleFacility(k)} style={{ cursor: "pointer", opacity: 0.6, fontSize: 11 }}>✕</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
+
+                {}
+                <div style={{ padding: "24px 28px" }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Images</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 580 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 600 }}>
                     <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
-                      Upload Photos <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(optional — first image will be set as main)</span>
+                      Upload Photos
+                      <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(optional — first image will be set as main)</span>
                     </label>
                     <label htmlFor="roomImages">
                       <div className="uz" style={{ border: `2px dashed ${errors.images ? "#FCA5A5" : "#D1D5DB"}`, borderRadius: 12, padding: "28px 20px", textAlign: "center", background: "#FAFAFA", cursor: "pointer", transition: "all 0.18s" }}>
@@ -418,7 +547,8 @@ export default function AddRoom() {
                           <div key={i} style={{ position: "relative", width: 80, height: 80 }}>
                             <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: `2px solid ${i === 0 ? "#C9A84C" : "#E5E7EB"}` }} />
                             {i === 0 && <span style={{ position: "absolute", bottom: 2, left: 2, background: "#C9A84C", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 4 }}>MAIN</span>}
-                            <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
+                            <button type="button" onClick={() => removeImage(i)}
+                              style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
                               <Icons.xIcon />
                             </button>
                           </div>
@@ -428,15 +558,18 @@ export default function AddRoom() {
                   </div>
                 </div>
 
-                {/* Footer */}
+                {}
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
                   <button type="button" className="br" onClick={handleReset}
-                    style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>Clear Form</button>
+                    style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}>
+                    Clear Form
+                  </button>
                   <button type="submit" className="bs" disabled={isLoading}
-                    style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
+                    style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)", fontFamily: "inherit" }}>
                     <Icons.plus />{isLoading ? "Saving..." : "Save Room"}
                   </button>
                 </div>
+
               </div>
             </form>
           </div>

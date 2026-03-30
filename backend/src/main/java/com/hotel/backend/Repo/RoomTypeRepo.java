@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface RoomTypeRepo extends JpaRepository<RoomType, Long> {
-
-    Optional<RoomType> findFirstByRoomTypeName(String roomTypeName);
+	Optional<RoomType> findFirstByRoomTypeName(String roomTypeName);
 }

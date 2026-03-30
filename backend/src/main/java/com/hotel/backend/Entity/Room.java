@@ -18,7 +18,8 @@ public class Room {
     @Column(name = "room_name", nullable = false)
     private String roomName;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+
+     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "room_type_id", nullable = false)
     private RoomType roomType;
 
@@ -32,4 +33,5 @@ public class Room {
     public enum RoomStatus {
         AVAILABLE, MAINTENANCE
     }
+
 }

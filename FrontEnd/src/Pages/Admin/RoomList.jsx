@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../Utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 const Icons = {
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
@@ -16,7 +16,6 @@ const Icons = {
   chevron: () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
 };
 
-
 const STATUS_COLORS = {
   AVAILABLE:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981", label: "Available"   },
   MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Maintenance" },
@@ -28,7 +27,7 @@ function RoomThumbnail({ roomId }) {
 
   useEffect(() => {
     let cancelled = false;
-    axios.get(`${BASE_URL}/api/admin/rooms/${roomId}/images`)
+    api.get(`${BASE_URL}/api/admin/rooms/${roomId}/images`)
       .then(res => {
         if (cancelled) return;
         const images = res.data || [];
@@ -66,7 +65,7 @@ function AvailabilityDropdown({ room, onStatusChange }) {
     if (newStatus === room.roomStatus) { setOpen(false); return; }
     setSaving(true); setOpen(false);
     try {
-      await axios.patch(`${BASE_URL}/api/admin/rooms/${room.roomId}/status`,
+      await api.patch(`${BASE_URL}/api/admin/rooms/${room.roomId}/status`,
         { status: newStatus },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -141,13 +140,14 @@ export default function RoomList() {
   const [roomToDelete, setRoomToDelete] = useState(null);
   const [isDeleting,   setIsDeleting]   = useState(false);
   const [toast,        setToast]        = useState("");
+  const [deleteError,  setDeleteError]  = useState(null); 
 
   useEffect(() => { fetchRooms(); }, []);
 
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${BASE_URL}/api/admin/rooms`);
+      const res = await api.get(`${BASE_URL}/api/admin/rooms`);
       setRooms(res.data || []);
     } catch {
       setError("Failed to load rooms. Make sure the backend is running.");
@@ -168,14 +168,16 @@ export default function RoomList() {
     if (!roomToDelete) return;
     setIsDeleting(true);
     try {
-      await axios.delete(`${BASE_URL}/api/admin/rooms/${roomToDelete.roomId}`);
+      await api.delete(`${BASE_URL}/api/admin/rooms/${roomToDelete.roomId}`);
       setRooms(prev => prev.filter(r => r.roomId !== roomToDelete.roomId));
+      setRoomToDelete(null);
       showToast(`Room "${roomToDelete.roomName}" deleted successfully!`);
-    } catch {
-      alert("Failed to delete room. Please try again.");
+    } catch (err) {
+      const msg = err.response?.data || "Failed to delete room. Please try again.";
+      setRoomToDelete(null);
+      setDeleteError(msg);
     } finally {
       setIsDeleting(false);
-      setRoomToDelete(null);
     }
   };
 
@@ -211,6 +213,24 @@ export default function RoomList() {
       {roomToDelete && (
         <DeleteModal room={roomToDelete} onConfirm={handleDeleteConfirm}
           onCancel={() => setRoomToDelete(null)} isDeleting={isDeleting} />
+      )}
+
+      {}
+      {deleteError && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 32, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🚫</div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 10 }}>Cannot Delete Room</h2>
+            <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.6, marginBottom: 20 }}>{deleteError}</p>
+            <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", marginBottom: 24, fontSize: 13, color: "#92400E", textAlign: "left" }}>
+              💡 <strong>To delete this room:</strong> go to Bookings, find all bookings for this room and cancel them first, then try deleting again.
+            </div>
+            <button onClick={() => setDeleteError(null)}
+              style={{ padding: "10px 32px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer" }}>
+              OK, Got It
+            </button>
+          </div>
+        </div>
       )}
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
@@ -307,7 +327,7 @@ export default function RoomList() {
                         style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
 
                         {}
-                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>#{room.roomId}</td>
+                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>{room.roomId}</td>
 
                         {}
                         <td style={{ padding: "10px 20px" }}>
