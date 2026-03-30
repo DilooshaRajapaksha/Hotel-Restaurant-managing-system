@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../utils/axiosInstance';
 import './ProfileDrawer.css';
 
 const ProfileDrawer = ({ isOpen, onClose }) => {
@@ -28,7 +28,7 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
         newPassword: '',
         confirmPassword: ''
       });
-      setPreviewPic(user.picture || '');
+      setPreviewPic(user.userImage || user.picture ||  'https://via.placeholder.com/140');
     }
   }, [user]);
 
@@ -36,71 +36,100 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage('Image size must be less than 5MB');
+        return;
+      }
       const reader = new FileReader();
-      reader.onloadend = () => setPreviewPic(reader.result);
+      reader.onloadend = () => {
+        setPreviewPic(reader.result);
+        setSelectedFile(file);
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
-    let updatedPicture = user.picture;
+    setMessage('');
+    const trimmed = formData.name.trim();
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    const firstName = parts[0] || '';
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : firstName;
+
+    let updatedPicture = user.userImage || user.picture || '';
     if (selectedFile && previewPic) {
       updatedPicture = previewPic;
     }
 
-    const updatedUser = {
-      ...user,
-      name: formData.name,
-      email: formData.email,
-      picture: updatedPicture
-    };
-
-    if (formData.newPassword && formData.confirmPassword) {
-    if (formData.newPassword !== formData.confirmPassword) {
-      setMessage('New passwords do not match.');
-      return;
-    }
-
-    if (!formData.currentPassword) {
-      setMessage('Please enter your current password.');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        await axios.post('http://localhost:8080/api/auth/update-password', {
-          oldPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        setMessage('Profile and password updated successfully!');
-      } catch (err) {
-        const errorMsg = err.response?.data || 'Error updating password on server';
-        setMessage(errorMsg);
+    if (formData.newPassword || formData.confirmPassword) {
+      if (formData.newPassword !== formData.confirmPassword) {
+        setMessage('New passwords do not match.');
         return;
       }
-    } else {
-      setMessage('You must be logged in to change password.');
-      return;
+      if (!formData.currentPassword) {
+        setMessage('Please enter your current password.');
+        return;
+      }
     }
-  } else {
-        setMessage('Profile updated successfully!');
-  }
 
-    updateUser(updatedUser);
-    setSelectedFile(null);
-    setFormData({ ...formData,
-      currentPassword: '', 
-      newPassword: '', 
-      confirmPassword: '' });
-    setMessage('Profile updated successfully!');
+    try {
+      const profileRes = await api.post('/api/auth/update-profile', {
+        firstName,
+        lastName,
+        email: formData.email.trim(),
+        phoneNumber: user.phoneNumber || '',
+        userImage:
+          updatedPicture && !String(updatedPicture).includes('via.placeholder.com')
+            ? updatedPicture
+            : null,
+      });
+
+      const data = profileRes.data;
+      if (data.token) {
+        if (user.role?.toUpperCase() === 'ADMIN') {
+          localStorage.setItem('adminToken', data.token);
+        } else {
+          localStorage.setItem('customerToken', data.token);
+        }
+      }
+      const u = data.user;
+      const img = u.userImage || '';
+      updateUser({
+        ...user,
+        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || formData.name,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        phoneNumber: u.phoneNumber,
+        picture: img,
+        userImage: img,
+      });
+      setPreviewPic(img || 'https://via.placeholder.com/140');
+      setSelectedFile(null);
+
+      if (formData.newPassword && formData.confirmPassword) {
+        await api.post('/api/auth/update-password', {
+          oldPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        });
+        setMessage('Profile and password updated successfully!');
+      } else {
+        setMessage('Profile updated successfully!');
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }));
+    } catch (err) {
+      const errorMsg = err.response?.data;
+      setMessage(typeof errorMsg === 'string' ? errorMsg : 'Update failed. Please try again.');
+    }
   };
 
   const handleLogout = () => {

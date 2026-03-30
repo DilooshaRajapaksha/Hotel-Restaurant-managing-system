@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './SignUp.css';
-import axios from 'axios';
+import api from '../../utils/axiosInstance';
 import Logo from '../../assets/Pictures/SignInLogo.png';
 
 const SignUp = () => {
@@ -40,7 +40,7 @@ const SignUp = () => {
     };
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/register', dataToSend);
+      const response = await api.post('http://localhost:8080/api/auth/register', dataToSend);
       console.log('Signup success:', response.data);
       alert('Account created! Please sign in.');
       window.location.href = '/signin';
