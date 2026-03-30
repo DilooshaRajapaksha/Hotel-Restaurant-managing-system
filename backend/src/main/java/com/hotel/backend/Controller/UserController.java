@@ -60,7 +60,7 @@ public class UserController {
             }
 
             User savedUser = userService.registerUser(firstName, lastName, email, password, phoneNumber, role);
-            savedUser.setPasswardHash(null);
+            savedUser.setPasswordHash(null);
             return ResponseEntity.ok(savedUser);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -100,7 +100,7 @@ public class UserController {
             String firstName = (String) googleResponse.get("given_name");
             String lastName = (String) googleResponse.get("family_name");
             User user = userService.findOrCreateSocialUser(email, firstName, lastName);
-            user.setPasswardHash(null);
+            user.setPasswordHash(null);
             String token = jwtUtil.generateToken(email, user.getRole());
             return ResponseEntity.ok(new JwtResponse(token, user));
         } catch (Exception e) {
@@ -125,7 +125,7 @@ public class UserController {
             String firstName = (String) fbResponse.get("first_name");
             String lastName = (String) fbResponse.get("last_name");
             User user = userService.findOrCreateSocialUser(email, firstName, lastName);
-            user.setPasswardHash(null);
+            user.setPasswordHash(null);
             String token = jwtUtil.generateToken(email, user.getRole());
             return ResponseEntity.ok(new JwtResponse(token, user));
         } catch (Exception e) {
@@ -176,4 +176,38 @@ public class UserController {
         userService.changePassword(email, newPassword);
         return ResponseEntity.ok("Password reset successfully");
     }
+    // NEW - Profile Update with Image
+    @PostMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body) {
+        try {
+            // Get current logged-in user email from JWT
+            String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userService.getUserByEmail(currentEmail);
+
+            String firstName = (String) body.get("firstName");
+            String lastName = (String) body.get("lastName");
+            String email = (String) body.get("email");
+            String phoneNumber = (String) body.get("phoneNumber");
+            String userImage = (String) body.get("userImage");   // base64 string
+
+            if (firstName == null || lastName == null || email == null || phoneNumber == null) {
+                return ResponseEntity.badRequest().body("Required fields missing");
+            }
+
+            User updated = userService.updateProfile(
+                    currentUser.getUserId(), firstName, lastName, email, phoneNumber, userImage
+            );
+
+            updated.setPasswordHash(null);   // security
+
+            // Generate fresh token (good practice)
+            String newToken = jwtUtil.generateToken(updated.getEmail(), updated.getRole());
+
+            return ResponseEntity.ok(new JwtResponse(newToken, updated));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }
