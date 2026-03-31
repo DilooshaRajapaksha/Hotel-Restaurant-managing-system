@@ -18,6 +18,8 @@ import OrderList from './Pages/Admin/OrderManage/OrderList';
 import OrderDetails from './Pages/Admin/OrderManage/OrderDetails';
 import BookingList from './Pages/Admin/BookingList';
 import RoomDetail from './Pages/RoomDetail/RoomDetail';
+import HomeMenuPage from './Pages/HomeMenuPage';
+import MenuPage from './Pages/MenuPage';
 
 // Delivery placeholder (create later)
 const DeliveryDashboard = () => <div style={{ padding: 40, textAlign: 'center', fontSize: 18 }}>🚚 Delivery Staff Dashboard (coming soon)</div>;
@@ -48,6 +50,9 @@ export default function App() {
         {/* Orders */}
         <Route path="/admin/orders" element={<OrderList />} />
         <Route path="/admin/orders/:id" element={<OrderDetails />} />
+
+        <Route path="/pages/HomeMenu" element={<HomeMenuPage />} />
+        <Route path="/pages/Menu" element={<MenuPage />} />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/admin/rooms" replace />} />
