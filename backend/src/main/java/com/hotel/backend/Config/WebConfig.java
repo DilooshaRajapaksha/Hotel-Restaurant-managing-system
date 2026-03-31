@@ -5,6 +5,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
@@ -13,17 +14,20 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
+                // Allow local dev (Vite can change ports)
+                .allowedOriginPatterns("http://localhost:*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(true);   // keep this if you use JWT/cookies later
     }
 
-    // ✅ serve uploaded files: http://localhost:8081/uploads/menu/xxx.png
+    // Keep your resource handler for uploads
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String uploadPath = Paths.get("uploads").toAbsolutePath().normalize().toUri().toString();
+        // Resolve to an absolute OS-specific path, then expose it under /uploads/**
+        // Example URL: http://localhost:8080/uploads/rooms/<filename>
+        Path uploadRoot = Paths.get("uploads").toAbsolutePath().normalize();
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadPath);
+                .addResourceLocations(uploadRoot.toUri().toString());
     }
 }

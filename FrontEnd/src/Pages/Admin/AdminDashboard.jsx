@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../Utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 const MONTHS   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const fmt  = (n) => Number(n || 0).toLocaleString();
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
   const [error,   setError]   = useState(null);
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/admin/reports/summary`)
+    api.get(`${BASE_URL}/api/admin/reports/summary`)
       .then(res => setData(res.data))
       .catch(() => setError("Failed to load report data. Make sure the backend is running."))
       .finally(() => setLoading(false));

@@ -30,7 +30,7 @@ public class UserService {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        user.setPasswardHash(passwordEncoder.encode(password));
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setPhoneNumber(phoneNumber);
         user.setRole(role);
         return userRepo.save(user);
@@ -45,8 +45,8 @@ public class UserService {
         Optional<User> optionalUser = userRepo.findByEmail(email);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            if (passwordEncoder.matches(password, user.getPasswardHash())) {
-                user.setPasswardHash(null);
+            if (passwordEncoder.matches(password, user.getPasswordHash())) {
+                user.setPasswordHash(null);
                 return user;
             }
         }
@@ -61,7 +61,7 @@ public class UserService {
         Optional<User> optionalUser = userRepo.findByEmail(email);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            user.setPasswardHash(passwordEncoder.encode(newPassword));
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
             userRepo.save(user);
         } else {
             throw new RuntimeException("User not found");
@@ -77,9 +77,37 @@ public class UserService {
         user.setFirstName(firstName != null ? firstName : "Social");
         user.setLastName(lastName != null ? lastName : "User");
         user.setEmail(email);
-        user.setPasswardHash(passwordEncoder.encode("social"));
+        user.setPasswordHash(passwordEncoder.encode("social"));
         user.setPhoneNumber("0000000000");
         user.setRole("CUSTOMER");
         return userRepo.save(user);
     }
+    public User getUserByEmail(String email) {
+        return userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User updateProfile(Long userId, String firstName, String lastName,
+                              String email, String phoneNumber, String userImage) {
+
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Optional: check if email changed and already exists
+        if (!user.getEmail().equals(email) && userRepo.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPhoneNumber(phoneNumber);
+
+        if (userImage != null && !userImage.isEmpty()) {
+            user.setUserImage(userImage);   // save base64
+        }
+
+        return userRepo.save(user);
+    }
+
 }
