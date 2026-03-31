@@ -1,36 +1,33 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from 'react-router-dom';
 
-// Room Management
-import RoomList      from "./Pages/Admin/RoomList";
-import AddRoom       from "./Pages/Admin/AddRoom";
-import UpdateRoom    from "./Pages/Admin/UpdateRoom";
+import Home from './Pages/HomePage/Home.jsx';
+import Login from './Pages/SignIn/SignIn.jsx';
+import Signup from './Pages/SignUp/SignUp.jsx';
+import ForgotPassword from './Pages/ForgetPassword/ForgotPassword.jsx';
+import ResetPassword from './Pages/RestPassword/ResetPassword.jsx';
+import RoomsPage from './Pages/RoomsPage/RoomsPage.jsx';
+import RoomDetail from './Pages/RoomDetail/RoomDetail.jsx';
 
-// Bookings
-import BookingList   from "./Pages/Admin/BookingList";
-
-// Reports Dashboard
-import AdminDashboard from "./Pages/Admin/AdminDashboard";
-
-export default function App() {
+function App() {
   return (
-    <Router>
+    <div className="app-route">
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/rooms" replace />} />
+        {/* Main Pages */}
+        <Route path="/" element={<Home />} />
+        <Route path="/signin" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Room Management */}
-        <Route path="/admin/rooms"          element={<RoomList />} />
-        <Route path="/admin/rooms/add"      element={<AddRoom />} />
-        <Route path="/admin/rooms/edit/:id" element={<UpdateRoom />} />
+        {/* Rooms Pages */}
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/:id" element={<RoomDetail />} />
 
-        {/* Bookings */}
-        <Route path="/admin/bookings"       element={<BookingList />} />
-
-        {/* Reports Dashboard */}
-        <Route path="/admin/reports"        element={<AdminDashboard />} />
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/admin/rooms" replace />} />
+        {/* 404 Page */}
+        <Route path="*" element={<div>404 - Page is under development</div>} />
       </Routes>
-    </Router>
+    </div>
   );
 }
+
+export default App;

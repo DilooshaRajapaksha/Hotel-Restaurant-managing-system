@@ -198,10 +198,28 @@ export default function UpdateRoom() {
 
   const validate = () => {
     const e = {};
-    if (!form.roomName.trim())  e.roomName     = "Room name is required.";
-    if (!form.roomTypeName)     e.roomTypeName = "Please select a room type.";
-    if (!form.roomPrice)        e.roomPrice    = "Room price is required.";
-    else if (isNaN(form.roomPrice) || Number(form.roomPrice) < 0) e.roomPrice = "Price must be a valid positive number.";
+    if (!form.roomName.trim())    e.roomName    = "Room name is required.";
+    if (!form.roomType)           e.roomType    = "Please select a room type.";
+    if (!form.description.trim()) e.description = "Description is required.";
+    if (!form.capacity)           e.capacity    = "Room capacity is required.";
+    else if (isNaN(form.capacity) || Number(form.capacity) < 1) e.capacity = "Capacity must be at least 1.";
+  const removeExistingImage = async (imageId) => {
+    try {
+      await axios.delete(`http://localhost:8081/api/admin/room-images/${imageId}`);
+      setExistingImages(prev => prev.filter(img => img.Rimage_id !== imageId));
+    } catch (err) {
+      console.error("Failed to delete image:", err);
+      setErrors({ general: "Failed to delete image. Please try again." });
+    }
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.room_name.trim()) e.room_name = "Room name is required.";
+    if (!form.room_type_id) e.room_type_id = "Please select a room type.";
+    if (!form.room_price) e.room_price = "Room price is required.";
+    else if (isNaN(form.room_price) || Number(form.room_price) < 0)
+      e.room_price = "Price must be a positive number.";
     return e;
   };
 
@@ -258,6 +276,44 @@ export default function UpdateRoom() {
       </div>
     </div>
   );
+  const inp = (hasError, extra = {}) => ({
+    padding: "10px 14px", borderRadius: 8, fontSize: 14, width: "100%",
+    border: `1.5px solid ${hasError ? "#FCA5A5" : "#E5E7EB"}`,
+    background: hasError ? "#FFF5F5" : "#FAFAFA",
+    color: "#111827", fontFamily: "inherit", ...extra,
+  });
+
+  if (isFetching) {
+    return (
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+        <AdminSidebar />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", color: "#9CA3AF" }}>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Loading room details...</div>
+            <div style={{ fontSize: 13 }}>Fetching Room ID: {id}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+        <AdminSidebar />
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", maxWidth: 400 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Room Not Found</div>
+            <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 24 }}>{fetchError}</div>
+            <button onClick={() => navigate("/admin/rooms")} style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer" }}>
+              Back to Room List
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -298,6 +354,7 @@ export default function UpdateRoom() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
+              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>🔔</button>
               <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
@@ -317,6 +374,21 @@ export default function UpdateRoom() {
               <p style={{ fontSize: 14, color: "#6B7280" }}>Editing Room ID: <strong style={{ color: "#C9A84C" }}>#{id}</strong> — {form.roomName}</p>
             </div>
 
+
+            {/* Page header */}
+            <div style={{ marginBottom: 24 }}>
+              <button className="bk" onClick={() => navigate("/admin/rooms")} style={{ marginBottom: 12 }}>
+                <Icons.arrowLeft /> Back to Room Management
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div>
+                  <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Update Room</h1>
+                  <p style={{ fontSize: 14, color: "#6B7280" }}>Editing Room ID: <strong style={{ color: "#C9A84C" }}>#{id}</strong> — {form.room_name}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Error banner */}
             {submitStatus === "error" && Object.keys(errors).length > 0 && (
               <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "12px 16px", marginBottom: 20, color: "#991B1B", fontSize: 14, fontWeight: 500 }}>
                 {errors.general || "⚠ Please fix the highlighted fields before saving."}
@@ -516,8 +588,18 @@ export default function UpdateRoom() {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
                         {imagePreviews.map((src, i) => (
                           <div key={i} style={{ position: "relative", width: 80, height: 80 }}>
-                            <img src={src} alt={`new ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #C9A84C" }} />
-                            <button type="button" onClick={() => removeNewImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}><Icons.xIcon /></button>
+                            <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #E5E7EB" }} />
+                            <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#EF4444", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", padding: 0 }}>
+                    
+                    {/* New Image Previews */}
+                    {imagePreviews.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+                        {imagePreviews.map((src, i) => (
+                          <div key={i} className="image-container">
+                            <img src={src} alt={`preview ${i+1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #E5E7EB" }} />
+                            <button type="button" className="remove-btn" onClick={() => removeImage(i)}>
+                              <Icons.xIcon />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -536,12 +618,29 @@ export default function UpdateRoom() {
                     <Icons.save />{isLoading ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
+
+                </div>
+
+                {/* Form actions */}
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
+                  <button type="button" className="br" onClick={() => navigate("/admin/rooms")}
+                    style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="bs" disabled={isLoading}
+                    style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
+                    <Icons.save />
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+
               </div>
             </form>
           </div>
         </div>
       </div>
 
+      {/* Success toast */}
       {submitStatus === "success" && (
         <div className="toast" style={{ position: "fixed", bottom: 28, right: 28, zIndex: 999, padding: "14px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", background: "#D1FAE5", color: "#065F46", border: "1px solid #6EE7B7" }}>
           ✓ Room updated successfully! Redirecting...

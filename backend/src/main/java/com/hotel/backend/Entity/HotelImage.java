@@ -1,13 +1,11 @@
 package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "HOTEL_IMAGE")
-@Data
 public class HotelImage {
 
     @Id
@@ -26,4 +24,19 @@ public class HotelImage {
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt = LocalDateTime.now();
+
+    public Long getRimageId() { return rimageId; }
+    public void setRimageId(Long rimageId) { this.rimageId = rimageId; }
+
+    public Long getRoomId() { return roomId; }
+    public void setRoomId(Long roomId) { this.roomId = roomId; }
+
+    public String getRimageUrl() { return rimageUrl; }
+    public void setRimageUrl(String rimageUrl) { this.rimageUrl = rimageUrl; }
+
+    public Boolean getIsMain() { return isMain; }
+    public void setIsMain(Boolean isMain) { this.isMain = isMain; }
+
+    public LocalDateTime getUploadedAt() { return uploadedAt; }
+    public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
 }
