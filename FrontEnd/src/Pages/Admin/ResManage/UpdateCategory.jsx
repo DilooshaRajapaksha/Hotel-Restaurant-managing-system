@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../../Utils/axiosInstance";
 
 const Icons = {
   xIcon: () => (
@@ -79,7 +79,7 @@ export default function UpdateCategory() {
       setIsFetching(true);
       setFetchError(null);
 
-      const res = await axios.get(`http://localhost:8081/api/admin/menu-categories/${id}`);
+      const res = await api.get(`http://localhost:8080/api/admin/menu-categories/${id}`);
       const category = res.data;
 
       setForm({
@@ -137,7 +137,7 @@ export default function UpdateCategory() {
     setIsLoading(true);
 
     try {
-      await axios.put(`http://localhost:8081/api/admin/menu-categories/${id}`, {
+      await api.put(`http://localhost:8080/api/admin/menu-categories/${id}`, {
         category_name: form.category_name.trim(),
         description: form.description.trim(),
         is_active: form.is_active,
