@@ -1,0 +1,114 @@
+.room-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.back-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background-color: #ddd;
+}
+
+.room-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.room-images {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.room-info {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.room-title {
+  font-size: 32px;
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.details-section, .amenities-section {
+  margin-bottom: 30px;
+}
+
+.details-section h3, .amenities-section h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.details-section ul, .amenities-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.details-section li, .amenities-section li {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.book-btn {
+  width: 100%;
+  background-color: #ffeb3b;
+  border: 2px solid #ffeb3b;
+  padding: 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.book-btn:hover {
+  background-color: transparent;
+  color: #ffeb3b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .room-detail {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .main-image {
+    height: 300px;
+  }
+
+  .room-title {
+    font-size: 24px;
+  }
+}

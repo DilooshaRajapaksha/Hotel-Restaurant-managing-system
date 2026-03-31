@@ -2,14 +2,12 @@ package com.hotel.backend.Controller.customer;
 
 import com.hotel.backend.DTO.OrderResponseDTO;
 import com.hotel.backend.Service.OrderService;
-import com.hotel.backend.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/customer/orders")
