@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../../Utils/axiosInstance";
 
 const Icons = {
   plus: () => (
@@ -82,7 +82,7 @@ export default function FoodList() {
             if (!id) return;
             if (thumbs[id]) return;
 
-            const imgRes = await axios.get(`http://localhost:8081/api/admin/menu-items/${id}/images`);
+            const imgRes = await api.get(`http://localhost:8080/api/admin/menu-items/${id}/images`);
             const arr = imgRes.data || [];
             const first = arr[0];
 
@@ -109,7 +109,7 @@ export default function FoodList() {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get("http://localhost:8081/api/admin/menu-items");
+      const res = await api.get("http://localhost:8080/api/admin/menu-items");
       setItems(res.data || []);
     } catch {
       setError("Failed to load menu items. Make sure the backend is running.");
@@ -122,7 +122,7 @@ export default function FoodList() {
     try {
       setCategoryLoading(true);
       setCategoryError(null);
-      const res = await axios.get("http://localhost:8081/api/admin/menu-categories");
+      const res = await api.get("http://localhost:8080/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch {
       setCategories([]);
@@ -138,7 +138,7 @@ export default function FoodList() {
 
     try {
       setDeletingId(itemId);
-      await axios.delete(`http://localhost:8081/api/admin/menu-items/${itemId}`);
+      await api.delete(`http://localhost:8080/api/admin/menu-items/${itemId}`);
 
       setItems((prev) => prev.filter((item) => item.item_id !== itemId));
       setThumbs((prev) => {
@@ -165,7 +165,7 @@ export default function FoodList() {
 
     try {
       setDeletingCategoryId(categoryId);
-      await axios.delete(`http://localhost:8081/api/admin/menu-categories/${categoryId}`);
+      await api.delete(`http://localhost:8080/api/admin/menu-categories/${categoryId}`);
       setCategories((prev) => prev.filter((cat) => cat.category_id !== categoryId));
     } catch (err) {
       console.error("Failed to delete category:", err);
@@ -213,7 +213,7 @@ export default function FoodList() {
     if (!url) return "";
 
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `http://localhost:8081${url}`;
+    return `http://localhost:8080${url}`;
   };
 
   return (

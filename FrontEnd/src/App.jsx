@@ -1,16 +1,9 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './Components/ProtectedRoute';
 
-// Public / Customer pages
-import Home from './Pages/HomePage/Home';
-import RoomsPage from './Pages/RoomsPage/RoomsPage';
-import SignIn from './Pages/SignIn/SignIn';
-import Signup from './Pages/SignUp/SignUp';
-import ForgotPassword from './Pages/ForgetPassword/ForgotPassword';
-import ResetPassword from './Pages/RestPassword/ResetPassword';
-import Contact from './Pages/Contact/Contact';
+
+
 // Admin pages (self-contained with AdminSidebar)
 import AdminDashboard from './Pages/Admin/AdminDashboard';   // or wherever it lives
 import RoomList from './Pages/Admin/RoomList';
@@ -29,6 +22,40 @@ import RoomDetail from './Pages/RoomDetail/RoomDetail';
 // Delivery placeholder (create later)
 const DeliveryDashboard = () => <div style={{ padding: 40, textAlign: 'center', fontSize: 18 }}>🚚 Delivery Staff Dashboard (coming soon)</div>;
 
+<<<<<<< HEAD
+import OrderList from "./Pages/Admin/OrderManage/OrderList";
+import OrderDetails from "./Pages/Admin/OrderManage/OrderDetails";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/admin/rooms" replace />} />
+
+        {/* Rooms */}
+        <Route path="/admin/rooms" element={<RoomList />} />
+        <Route path="/admin/rooms/add" element={<AddRoom />} />
+        <Route path="/admin/rooms/edit/:id" element={<UpdateRoom />} />
+
+        {/* Menu */}
+        <Route path="/admin/menu" element={<FoodList />} />
+        <Route path="/admin/menu/add" element={<AddFood />} />
+        <Route path="/admin/menu/add-category" element={<AddCategory />} />
+        <Route path="/admin/menu/edit/:id" element={<UpdateFood />} />
+        <Route path="/admin/menu/categories/edit/:id" element={<UpdateCategory />} />
+
+
+        {/* Orders */}
+        <Route path="/admin/orders" element={<OrderList />} />
+        <Route path="/admin/orders/:id" element={<OrderDetails />} />
+
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/admin/rooms" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+=======
 function App() {
   return (
     <AuthProvider>
@@ -41,11 +68,7 @@ function App() {
           <Route path="/rooms/:id" element={<RoomDetail />} />
           <Route path="/contact" element={<Contact />} />
 
-          {/* AUTH */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          
 
           {/* ADMIN ROUTES – protected */}
           <Route
@@ -132,3 +155,4 @@ function App() {
 }
 
 export default App;
+>>>>>>> 8d7205ddee1ea0e38abb214c190a93bb900b996d

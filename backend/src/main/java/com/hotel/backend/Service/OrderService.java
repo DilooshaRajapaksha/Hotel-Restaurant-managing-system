@@ -162,4 +162,11 @@ public class OrderService {
 
         return dto;
     }
+    public List<OrderResponseDTO> getMyOrders(Long userId) {
+        return foodOrderRepo.findByUserUserIdOrderByOrderDateDesc(userId)
+                .stream()
+                .map(this::toListDTO)
+                .collect(Collectors.toList());
+    }
+
 }

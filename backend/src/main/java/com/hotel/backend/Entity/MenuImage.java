@@ -1,9 +1,13 @@
 package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
-@Table(name = "menu_image")
+@Table(name = "MENU_IMAGE")
 public class MenuImage {
 
     @Id
@@ -20,15 +24,4 @@ public class MenuImage {
     @Column(name = "is_main")
     private Boolean isMain = false;
 
-    public Long getFimageId() { return fimageId; }
-    public void setFimageId(Long fimageId) { this.fimageId = fimageId; }
-
-    public Long getItemId() { return itemId; }
-    public void setItemId(Long itemId) { this.itemId = itemId; }
-
-    public String getFimageUrl() { return fimageUrl; }
-    public void setFimageUrl(String fimageUrl) { this.fimageUrl = fimageUrl; }
-
-    public Boolean getIsMain() { return isMain; }
-    public void setIsMain(Boolean isMain) { this.isMain = isMain; }
 }
