@@ -24,4 +24,6 @@ public interface FoodOrderRepo extends JpaRepository<FoodOrder, Long> {
         ORDER BY fo.orderId DESC
     """)
     List<FoodOrder> searchOrders(String status, LocalDate date, String customer);
+
+    List<FoodOrder> findByUserUserIdOrderByOrderDateDesc(Long userId);
 }

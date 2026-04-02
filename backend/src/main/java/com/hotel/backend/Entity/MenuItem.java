@@ -1,10 +1,15 @@
 package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
+@Setter
+@Getter
 @Entity
-@Table(name = "menu_items")
+@Table(name = "MENU_ITEMS")
 public class MenuItem {
 
     @Id
@@ -37,30 +42,4 @@ public class MenuItem {
     @Column(name = "preparation_time")
     private Integer preparationTime;
 
-    public Long getItemId() { return itemId; }
-    public void setItemId(Long itemId) { this.itemId = itemId; }
-
-    public Long getCategoryId() { return categoryId; }
-    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-
-    public String getItemName() { return itemName; }
-    public void setItemName(String itemName) { this.itemName = itemName; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public BigDecimal getHalfPrice() { return halfPrice; }
-    public void setHalfPrice(BigDecimal halfPrice) { this.halfPrice = halfPrice; }
-
-    public BigDecimal getFullPrice() { return fullPrice; }
-    public void setFullPrice(BigDecimal fullPrice) { this.fullPrice = fullPrice; }
-
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
-
-    public Boolean getIsAvailable() { return isAvailable; }
-    public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }
-
-    public Integer getPreparationTime() { return preparationTime; }
-    public void setPreparationTime(Integer preparationTime) { this.preparationTime = preparationTime; }
 }

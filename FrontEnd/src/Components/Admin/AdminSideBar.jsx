@@ -46,6 +46,7 @@ export default function AdminSidebar() {
   const location = useLocation();
 
   const handleLogout = () => {
+    localStorage.removeItem("adminToken");
     navigate("/login");
   };
 
