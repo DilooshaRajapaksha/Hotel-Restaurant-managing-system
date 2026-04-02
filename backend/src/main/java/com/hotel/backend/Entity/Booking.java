@@ -2,7 +2,6 @@ package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -40,6 +39,15 @@ public class Booking {
     @Column(name = "booking_status")
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus = BookingStatus.PENDING;
+
+    // === FIXED: Missing relationships ===
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", insertable = false, updatable = false)
+    private Room room;
 
     public enum BookingStatus {
         PENDING, CONFIRMED, CANCELLED
