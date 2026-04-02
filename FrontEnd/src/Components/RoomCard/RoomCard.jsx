@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RoomCard.css';
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8081";
 
 const RoomCard = ({ room }) => {
   const navigate = useNavigate();

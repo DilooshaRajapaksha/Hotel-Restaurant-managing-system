@@ -25,7 +25,7 @@ const ResetPassword = () => {
     }
     setLoading(true);
     try {
-      await api.post('http://localhost:8080/api/auth/reset-password', { token, newPassword });
+      await api.post('http://localhost:8081/api/auth/reset-password', { token, newPassword });
       setMessage('Password reset successfully! Redirecting to sign in...');
       setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {

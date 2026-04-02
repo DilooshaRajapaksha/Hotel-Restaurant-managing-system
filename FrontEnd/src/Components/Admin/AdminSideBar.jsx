@@ -95,14 +95,11 @@ export default function AdminSidebar() {
         position: "sticky", top: 0, flexShrink: 0,
         fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
       }}>
-
-        {/* Logo */}
         <div style={{ padding: "28px 24px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#C9A84C", letterSpacing: "-0.5px" }}>★ Golden Stars</div>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 3, letterSpacing: "1px", textTransform: "uppercase" }}>Admin Portal</div>
         </div>
 
-        {/* Admin profile */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #C9A84C, #8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>A</div>
           <div>
@@ -111,7 +108,6 @@ export default function AdminSidebar() {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav style={{ flex: 1, padding: "16px 12px" }}>
           {NAV_ITEMS.map(({ id, label, path, Icon }) => {
             const isActive = location.pathname.startsWith(path);
@@ -125,14 +121,12 @@ export default function AdminSidebar() {
           })}
         </nav>
 
-        {/* Sign Out */}
         <div style={{ padding: "16px 12px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
           <button className="sidebar-logout-btn" onClick={handleLogout}>
             <Icons.logout />
             Sign Out
           </button>
         </div>
-
       </aside>
     </>
   );
