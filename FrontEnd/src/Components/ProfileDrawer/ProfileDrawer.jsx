@@ -28,7 +28,7 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
         newPassword: '',
         confirmPassword: ''
       });
-      setPreviewPic(user.userImage || user.picture ||  'https://via.placeholder.com/140');
+      setPreviewPic(user.userImage || user.picture || 'https://via.placeholder.com/140');
     }
   }, [user]);
 
@@ -36,7 +36,7 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-const handleFileChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -50,6 +50,26 @@ const handleFileChange = (e) => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const goToMyOrders = () => {
+    onClose();
+    navigate('/my-orders');
+  };
+
+  const goToCurrentOrders = () => {
+    onClose();
+    navigate('/my-orders?tab=current');
+  };
+
+  const goToPreviousOrders = () => {
+    onClose();
+    navigate('/my-orders?tab=previous');
+  };
+
+  const goToOrderTracking = () => {
+    onClose();
+    navigate('/order-tracking');
   };
 
   const handleSave = async () => {
@@ -81,10 +101,7 @@ const handleFileChange = (e) => {
         lastName,
         email: formData.email.trim(),
         phoneNumber: user.phoneNumber || '',
-        userImage:
-          updatedPicture && !String(updatedPicture).includes('via.placeholder.com')
-            ? updatedPicture
-            : null,
+        userImage: updatedPicture && !String(updatedPicture).includes('via.placeholder.com') ? updatedPicture : null,
       });
 
       const data = profileRes.data;
@@ -197,6 +214,41 @@ const handleFileChange = (e) => {
                 {message}
               </p>
             )}
+          </div>
+
+          <div className="orders-section">
+            <h2 className="section-title">My Orders</h2>
+            <p className="section-subtitle">View and track your restaurant orders</p>
+
+            <div className="orders-grid">
+              <div className="order-card" onClick={goToMyOrders}>
+                <div className="order-icon">📋</div>
+                <h3>All Orders</h3>
+                <p>View complete order history</p>
+                <button className="order-btn">View All</button>
+              </div>
+
+              <div className="order-card" onClick={goToCurrentOrders}>
+                <div className="order-icon">🔄</div>
+                <h3>Current Orders</h3>
+                <p>Active & Preparing orders</p>
+                <button className="order-btn primary">Track Live</button>
+              </div>
+
+              <div className="order-card" onClick={goToPreviousOrders}>
+                <div className="order-icon">✅</div>
+                <h3>Previous Orders</h3>
+                <p>Completed & Cancelled</p>
+                <button className="order-btn">View History</button>
+              </div>
+
+              <div className="order-card" onClick={goToOrderTracking}>
+                <div className="order-icon">🚚</div>
+                <h3>Order Tracking</h3>
+                <p>Track delivery in real-time</p>
+                <button className="order-btn primary">Track Now</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
