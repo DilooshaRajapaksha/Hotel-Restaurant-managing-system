@@ -2,7 +2,6 @@ package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,4 +25,5 @@ public class HotelImage {
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt = LocalDateTime.now();
+
 }
