@@ -60,7 +60,7 @@ const BookingForm = ({ room, onBookingSuccess }) => {
     console.log("Sending booking payload:", payload);
 
     try {
-      const res = await fetch('http://localhost:8080/api/customer/bookings', {
+      const res = await fetch('http://localhost:8081/api/customer/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

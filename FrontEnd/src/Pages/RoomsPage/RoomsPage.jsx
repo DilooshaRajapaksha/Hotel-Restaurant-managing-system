@@ -19,7 +19,7 @@ const RoomsPage = () => {
     const fetchRooms = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8080/api/public/rooms');
+        const response = await fetch('http://localhost:8081/api/public/rooms');
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

@@ -75,7 +75,7 @@ export default function AddCategory() {
       setErrors({});
       setSubmitStatus(null);
 
-      await api.post("http://localhost:8080/api/admin/menu-categories", {
+      await api.post("http://localhost:8081/api/admin/menu-categories", {
         category_name: form.category_name.trim(),
         description: form.description.trim(),
         is_active: form.is_active,

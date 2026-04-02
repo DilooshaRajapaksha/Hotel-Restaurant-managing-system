@@ -4,7 +4,7 @@ import ImageGallery from '../../Components/ImageGallery/ImageGallery';
 import BookingForm from '../../Components/BookingForm/BookingForm';
 import './RoomDetail.css';
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8081";
 
 const RoomDetail = () => {
   const { id } = useParams();
