@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import api from "../../Utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 
 const FALLBACK_ROOM_TYPES = [
   { roomTypeName: "Two-Bedroom Villa",                        capacity: 4 },
