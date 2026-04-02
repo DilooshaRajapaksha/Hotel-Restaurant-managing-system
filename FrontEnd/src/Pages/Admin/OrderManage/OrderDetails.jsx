@@ -65,7 +65,7 @@ export default function OrderDetails() {
       setLoading(true);
       setPageError(null);
 
-      const res = await api.get(`http://localhost:8080/api/admin/orders/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/orders/${id}`);
       setOrder(res.data || null);
       setDraftStatus(res.data?.order_status || "PENDING");
     } catch (err) {
@@ -79,7 +79,7 @@ export default function OrderDetails() {
   const handleSaveStatus = async () => {
     try {
       setSaving(true);
-      await api.put(`http://localhost:8080/api/admin/orders/${id}/status`, {
+      await api.put(`http://localhost:8081/api/admin/orders/${id}/status`, {
         order_status: draftStatus,
       });
 
@@ -101,7 +101,7 @@ export default function OrderDetails() {
 
     try {
       setSaving(true);
-      await api.put(`http://localhost:8080/api/admin/orders/${id}/cancel`);
+      await api.put(`http://localhost:8081/api/admin/orders/${id}/cancel`);
 
       setOrder((prev) => ({
         ...prev,

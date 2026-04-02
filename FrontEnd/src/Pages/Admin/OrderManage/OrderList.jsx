@@ -63,7 +63,7 @@ export default function OrderList() {
       setLoading(true);
       setPageError(null);
 
-      const res = await api.get("http://localhost:8080/api/admin/orders");
+      const res = await api.get("http://localhost:8081/api/admin/orders");
       const data = res.data || [];
 
       setOrders(data);
@@ -91,7 +91,7 @@ export default function OrderList() {
   const handleSaveStatus = async (orderId) => {
     try {
       setSavingId(orderId);
-      await api.put(`http://localhost:8080/api/admin/orders/${orderId}/status`, {
+      await api.put(`http://localhost:8081/api/admin/orders/${orderId}/status`, {
         order_status: statusDrafts[orderId],
       });
 
@@ -116,7 +116,7 @@ export default function OrderList() {
 
     try {
       setSavingId(orderId);
-      await api.put(`http://localhost:8080/api/admin/orders/${orderId}/cancel`);
+      await api.put(`http://localhost:8081/api/admin/orders/${orderId}/cancel`);
 
       setOrders((prev) =>
         prev.map((o) =>

@@ -79,7 +79,7 @@ export default function UpdateCategory() {
       setIsFetching(true);
       setFetchError(null);
 
-      const res = await api.get(`http://localhost:8080/api/admin/menu-categories/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/menu-categories/${id}`);
       const category = res.data;
 
       setForm({
@@ -137,7 +137,7 @@ export default function UpdateCategory() {
     setIsLoading(true);
 
     try {
-      await api.put(`http://localhost:8080/api/admin/menu-categories/${id}`, {
+        await api.put(`http://localhost:8081/api/admin/menu-categories/${id}`, {
         category_name: form.category_name.trim(),
         description: form.description.trim(),
         is_active: form.is_active,
