@@ -1,4 +1,4 @@
-package com.hotel.backend.Controller.customer;
+package com.hotel.backend.Controller;
 
 import com.hotel.backend.DTO.OrderResponseDTO;
 import com.hotel.backend.Service.OrderService;
