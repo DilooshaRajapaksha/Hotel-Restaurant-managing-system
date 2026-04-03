@@ -21,7 +21,7 @@ export default function DeliverySidebar() {
       fontFamily: "'DM Sans','Segoe UI',sans-serif",
       flexShrink: 0,
     }}>
-      {/* Logo */}
+
       <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 20 }}>🚴</span>
@@ -32,10 +32,9 @@ export default function DeliverySidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1, padding: "12px 0" }}>
         {navItems.map(({ label, path, icon }) => {
-          const active = location.pathname === path;
+          const active = location.pathname === path || (path === '/delivery/staff' && location.pathname.startsWith('/delivery/staff/'));
           return (
             <button key={path} onClick={() => navigate(path)}
               style={{
@@ -57,7 +56,6 @@ export default function DeliverySidebar() {
         })}
       </nav>
 
-      {/* Back to Admin */}
       <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         <button onClick={() => navigate("/admin/rooms")}
           style={{ width: "100%", padding: "9px 14px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}>

@@ -1,0 +1,49 @@
+.gallery-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.main-view {
+  height: 460px;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnails-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: #f9f9f9;
+  overflow-x: auto;
+}
+
+.thumbnail {
+  width: 100px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: 0.3s;
+}
+
+.thumbnail.active,
+.thumbnail:hover {
+  border-color: #d4af37;
+  transform: scale(1.04);
+}
+
+.no-images {
+  height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  color: #777;
+  font-size: 1.2rem;
+}
