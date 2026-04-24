@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import DeliverySidebar from "../../Components/Delivery/DeliverySidebar";
-import axios from "axios";
+import AdminSidebar from "../../Components/Admin/AdminSideBar";
+import api from "../../utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
 const GOLD = "#C9A84C";
 
 const STATUS_CONFIG = {
@@ -90,7 +89,7 @@ function AssignDropdown({ order, staffList, onAssign, onUnassign, onReassign }) 
   );
 }
 
-export default function AssignOrdersPage() {
+export default function AdminAssignOrdersPage() {
   const [orders,   setOrders]   = useState([]);
   const [staff,    setStaff]    = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -106,8 +105,8 @@ export default function AssignOrdersPage() {
     setLoading(true);
     try {
       const [oRes, sRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/delivery/orders`),
-        axios.get(`${BASE_URL}/api/delivery/staff`),
+        api.get(`/api/delivery/orders`),
+        api.get(`/api/delivery/staff`),
       ]);
       setOrders(oRes.data || []);
       setStaff(sRes.data  || []);
@@ -116,20 +115,20 @@ export default function AssignOrdersPage() {
   };
 
   const handleAssign = async (orderId, staffId) => {
-    const res = await axios.patch(`${BASE_URL}/api/delivery/orders/${orderId}/assign`, { staffId });
+    const res = await api.patch(`/api/delivery/orders/${orderId}/assign`, { staffId });
     setOrders(prev => prev.map(o => o.orderId === orderId ? res.data : o));
     const staffName = staff.find(s => s.staffId === staffId)?.sName || "Staff";
     showToast(`Order #${orderId} assigned to ${staffName}`);
   };
 
   const handleUnassign = async (orderId) => {
-    const res = await axios.patch(`${BASE_URL}/api/delivery/orders/${orderId}/unassign`);
+    const res = await api.patch(`/api/delivery/orders/${orderId}/unassign`);
     setOrders(prev => prev.map(o => o.orderId === orderId ? res.data : o));
     showToast(`Assignment removed from Order #${orderId}`);
   };
 
   const handleReassign = async (orderId, staffId) => {
-    const res = await axios.patch(`${BASE_URL}/api/delivery/orders/${orderId}/reassign`, { staffId });
+    const res = await api.patch(`/api/delivery/orders/${orderId}/reassign`, { staffId });
     setOrders(prev => prev.map(o => o.orderId === orderId ? res.data : o));
     const staffName = staff.find(s => s.staffId === staffId)?.sName || "Staff";
     showToast(`Order #${orderId} reassigned to ${staffName}`);
@@ -161,13 +160,13 @@ export default function AssignOrdersPage() {
       `}</style>
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-        <DeliverySidebar />
+        <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
           {/* Topbar */}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Delivery Portal</span>
+              <span style={{ color: "#9CA3AF" }}>Admin</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
               <span style={{ color: "#111827", fontWeight: 600 }}>Assign Orders</span>
             </div>

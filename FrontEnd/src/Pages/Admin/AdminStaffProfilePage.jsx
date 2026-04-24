@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import DeliverySidebar from "../../Components/Delivery/DeliverySidebar";
-import axios from "axios";
+import AdminSidebar from "../../Components/Admin/AdminSideBar";
+import api from "../../utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
 const GOLD = "#C9A84C";
 const NAVY = "#1B2A4A";
 
@@ -29,8 +28,8 @@ function OrderCard({ enriched, onStatusUpdate }) {
     const nextStatus = sc.next[0];
     setUpdating(true);
     try {
-      await axios.patch(
-        `${BASE_URL}/api/delivery/orders/${order.orderId}/status`,
+      await api.patch(
+        `/api/delivery/orders/${order.orderId}/status`,
         { status: nextStatus },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -114,7 +113,7 @@ function OrderCard({ enriched, onStatusUpdate }) {
   );
 }
 
-export default function StaffProfilePage() {
+export default function AdminStaffProfilePage() {
   const { id }     = useParams();
   const navigate   = useNavigate();
   const [profile,  setProfile]  = useState(null);
@@ -127,14 +126,13 @@ export default function StaffProfilePage() {
   const loadProfile = async () => {
     setLoading(true); setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/api/delivery/staff/${id}/profile`);
+      const res = await api.get(`/api/delivery/staff/${id}/profile`);
       setProfile(res.data);
     } catch (e) {
       setError(e.response?.data || "Failed to load staff profile.");
     } finally { setLoading(false); }
   };
 
-  
   const handleStatusUpdate = (orderId, newStatus) => {
     setProfile(prev => {
       if (!prev) return prev;
@@ -146,7 +144,6 @@ export default function StaffProfilePage() {
       let updatedActive  = updateList(prev.activeOrders);
       let updatedHistory = updateList(prev.historyOrders);
 
-      
       if (newStatus === "DELIVERED" || newStatus === "CANCELLED") {
         const moved = updatedActive.find(e => e.order.orderId === orderId);
         if (moved) {
@@ -161,7 +158,7 @@ export default function StaffProfilePage() {
 
   if (loading) return (
     <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-      <DeliverySidebar />
+      <AdminSidebar />
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "#9CA3AF" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🚴</div>
@@ -173,13 +170,13 @@ export default function StaffProfilePage() {
 
   if (error) return (
     <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-      <DeliverySidebar />
+      <AdminSidebar />
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>❌</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", marginBottom: 8 }}>Profile Not Found</div>
           <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}>{error}</div>
-          <button onClick={() => navigate("/delivery/staff")}
+          <button onClick={() => navigate("/admin/delivery/staff")}
             style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "none", background: `linear-gradient(135deg,${GOLD},#8B6914)`, color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
             Back to Staff List
           </button>
@@ -203,15 +200,15 @@ export default function StaffProfilePage() {
       `}</style>
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
-        <DeliverySidebar />
+        <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
           {/* Topbar */}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/delivery/staff")}>Delivery Portal</span>
+              <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/admin/delivery/staff")}>Delivery Portal</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/delivery/staff")}>Staff</span>
+              <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/admin/delivery/staff")}>Staff</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
               <span style={{ color: "#111827", fontWeight: 600 }}>{staff.sName}</span>
             </div>
@@ -226,10 +223,11 @@ export default function StaffProfilePage() {
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden", marginBottom: 24 }}>
 
               <div style={{ background: `linear-gradient(135deg,${NAVY},#2D4270)`, padding: "24px 28px 28px", display: "flex", alignItems: "center", gap: 20 }}>
+                {/* Avatar */}
                 <div style={{ width: 72, height: 72, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD},#8B6914)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#fff", border: "3px solid rgba(255,255,255,0.3)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", flexShrink: 0 }}>
                   {(staff.sName || "?").charAt(0).toUpperCase()}
                 </div>
-              
+ 
                 <div>
                   <h2 style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", marginBottom: 6 }}>{staff.sName}</h2>
                   <span style={{ fontSize: 12, background: "rgba(201,168,76,0.25)", color: GOLD, fontWeight: 600, padding: "3px 12px", borderRadius: 20, border: `1px solid ${GOLD}66` }}>

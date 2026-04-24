@@ -26,13 +26,16 @@ public class FoodOrder {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
-    @Column(name = "order_date", insertable = false, updatable = false)
+    @Column(name = "staff_id")
+    private Long staffId;
+
+    @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
     @Column(name = "order_status")
-    private String orderStatus;
-
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
 }
