@@ -1,35 +1,6 @@
 package com.hotel.backend.Controller;
 
-import com.hotel.backend.DTO.RoomResponse;
-import com.hotel.backend.Service.RoomService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@CrossOrigin(origins = "*")
-@RestController
-@RequestMapping("/api")
-public class RoomController {
-
-    private final RoomService roomService;
-
-    public RoomController(RoomService roomService) {
-        this.roomService = roomService;
-    }
-
-    @GetMapping("/rooms")
-    public List<RoomResponse> getAllRooms() {
-        return roomService.getAllRooms();
-    }
-
-    @GetMapping("/rooms/{id}")
-    public ResponseEntity<RoomResponse> getRoom(@PathVariable Long id) {
-        RoomResponse room = roomService.getRoomById(id);
-        if (room == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(room);
+import com.hotel.backend.Entity.HotelImage;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.RoomType;
 import com.hotel.backend.Service.RoomService;
@@ -51,7 +22,6 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
 
-    // GET all room types
     @GetMapping("/types")
     public ResponseEntity<List<RoomType>> getAllRoomTypes() {
         return ResponseEntity.ok(roomService.getAllRoomTypes());
@@ -140,8 +110,12 @@ public class RoomController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteRoom(@PathVariable Long id) {
-        roomService.deleteRoom(id);
-        return ResponseEntity.ok("Room deleted successfully");
+        try {
+            roomService.deleteRoom(id);
+            return ResponseEntity.ok("Room deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/images/{imageId}")

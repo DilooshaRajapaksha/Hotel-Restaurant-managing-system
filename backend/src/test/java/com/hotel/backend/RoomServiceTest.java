@@ -161,6 +161,7 @@ class RoomServiceTest {
         System.out.println("TC-011 PASSED ✓ RoomType name is not null");
     }
 
+
     @Test
     void TC012_updateRoomStatus_callsSave() {
         when(roomRepo.findById(1L)).thenReturn(Optional.of(sampleRoom));

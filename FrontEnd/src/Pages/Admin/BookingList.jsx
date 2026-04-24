@@ -1,18 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../Utils/axiosInstance";
 
 const BASE_URL = "http://localhost:8081";
-
-const Icons = {
-  search: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
-  empty: () => (<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>),
-  calendar: () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>),
-  chevron: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
-  user: () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>),
-  bed: () => (<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M2 12V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6"/><path d="M6 12v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>),
-  refresh: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>),
-};
+const PER_PAGE = 6;
 
 const STATUS_CONFIG = {
   PENDING:   { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Pending"   },
@@ -20,7 +11,15 @@ const STATUS_CONFIG = {
   CANCELLED: { bg: "#FEE2E2", color: "#991B1B", dot: "#EF4444", label: "Cancelled" },
 };
 
-const FILTER_TABS = ["ALL", "PENDING", "CONFIRMED", "CANCELLED"];
+const fmtDate = (d) => {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const nights = (ci, co) => {
+  if (!ci || !co) return 0;
+  return Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
+};
 
 function StatusDropdown({ booking, onStatusChange }) {
   const [open,   setOpen]   = useState(false);
@@ -31,161 +30,195 @@ function StatusDropdown({ booking, onStatusChange }) {
     if (newStatus === booking.bookingStatus) { setOpen(false); return; }
     setSaving(true); setOpen(false);
     try {
-      await axios.patch(
+      await api.patch(
         `${BASE_URL}/api/admin/bookings/${booking.bookingId}/status`,
         { status: newStatus },
         { headers: { "Content-Type": "application/json" } }
       );
       onStatusChange(booking.bookingId, newStatus);
-    } catch {
-      alert("Failed to update status. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert("Failed to update status."); }
+    finally { setSaving(false); }
   };
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen(p => !p)} disabled={saving}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "5px 10px 5px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}33`, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+      <button onClick={() => !saving && setOpen(p => !p)}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "5px 10px 5px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}33`, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, fontFamily: "inherit" }}>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: saving ? "#9CA3AF" : s.dot }} />
         {saving ? "Saving..." : s.label}
-        <Icons.chevron />
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", zIndex: 50, minWidth: 160, overflow: "hidden", animation: "slideUp 0.15s ease" }}>
-          <div style={{ padding: "6px 0" }}>
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", padding: "4px 14px 8px" }}>Change Status</p>
-            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-              <button key={key} onClick={() => handleSelect(key)}
-                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: key === booking.bookingStatus ? val.bg : "transparent", border: "none", cursor: "pointer", fontSize: 13, fontWeight: key === booking.bookingStatus ? 700 : 500, color: key === booking.bookingStatus ? val.color : "#374151", textAlign: "left" }}
-                onMouseEnter={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "#F9FAFB"; }}
-                onMouseLeave={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: val.dot }} />
-                {val.label}
-                {key === booking.bookingStatus && (
-                  <span style={{ marginLeft: "auto", fontSize: 11, background: val.dot, color: "#fff", padding: "1px 7px", borderRadius: 10 }}>Current</span>
-                )}
-              </button>
-            ))}
-          </div>
+        <div onMouseLeave={() => setOpen(false)}
+          style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", zIndex: 100, minWidth: 160, overflow: "hidden" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", padding: "8px 14px 4px" }}>Change Status</p>
+          {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+            <button key={key} onClick={() => handleSelect(key)}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: key === booking.bookingStatus ? val.bg : "transparent", border: "none", cursor: "pointer", fontSize: 13, fontWeight: key === booking.bookingStatus ? 700 : 500, color: key === booking.bookingStatus ? val.color : "#374151", textAlign: "left", fontFamily: "inherit" }}
+              onMouseEnter={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "#F9FAFB"; }}
+              onMouseLeave={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "transparent"; }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: val.dot, flexShrink: 0 }} />
+              {val.label}
+              {key === booking.bookingStatus && (
+                <span style={{ marginLeft: "auto", fontSize: 10, background: val.dot, color: "#fff", padding: "1px 6px", borderRadius: 10 }}>Current</span>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
+function ViewModal({ booking, userName, roomName, roomType, onClose }) {
+  if (!booking) return null;
+  const s = STATUS_CONFIG[booking.bookingStatus] || STATUS_CONFIG.PENDING;
+  const n = nights(booking.checkInDate, booking.checkOutDate);
+
+  const Row = ({ label, value }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "11px 0", borderBottom: "1px solid #F3F4F6" }}>
+      <span style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 13, color: "#111827", fontWeight: 600, textAlign: "right", marginLeft: 16 }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", animation: "fadeUp 0.2s ease" }}>
+
+        {}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>Booking Details</h3>
+            </div>
+            <span style={{ fontSize: 12, color: "#C9A84C", fontWeight: 700 }}>Booking {booking.bookingId}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}33` }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+              {s.label}
+            </span>
+            <button onClick={onClose}
+              style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontSize: 14, padding: 0 }}>✕</button>
+          </div>
+        </div>
+
+        {}
+        <div style={{ padding: "4px 24px 8px" }}>
+          <Row label="Guest"       value={userName || `User ${booking.userId}`} />
+          <Row label="Room"        value={roomName  || `Room ${booking.roomId}`} />
+          <Row label="Room Type"   value={roomType  || "—"} />
+          <Row label="Check-in"    value={fmtDate(booking.checkInDate)} />
+          <Row label="Check-out"   value={fmtDate(booking.checkOutDate)} />
+          <Row label="Duration"    value={`${n} night${n !== 1 ? "s" : ""}`} />
+          <Row label="Guests"      value={`${booking.numberOfGuest} guest${booking.numberOfGuest !== 1 ? "s" : ""}`} />
+          <Row label="Total Price" value={`Rs. ${Number(booking.totalPrice).toLocaleString()}`} />
+          {booking.specialRequest && (
+            <div style={{ padding: "12px 0" }}>
+              <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginBottom: 6 }}>Special Request</div>
+              <div style={{ fontSize: 13, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", lineHeight: 1.6 }}>
+                {booking.specialRequest}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {}
+        <div style={{ padding: "14px 24px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={onClose}
+            style={{ padding: "9px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BookingList() {
-  const [bookings,  setBookings]  = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState(null);
-  const [search,    setSearch]    = useState("");
-  const [tab,       setTab]       = useState("ALL");
-  const [toast,     setToast]     = useState("");
+  const [bookings,   setBookings]   = useState([]);
+  const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error,      setError]      = useState(null);
+  const [search,     setSearch]     = useState("");
+  const [fStatus,    setFStatus]    = useState("");
+  const [fDate,      setFDate]      = useState("");
+  const [page,       setPage]       = useState(1);
+  const [toast,      setToast]      = useState("");
+  const [userNames,  setUserNames]  = useState({});
+  const [roomNames,  setRoomNames]  = useState({});
+  const [roomTypes,  setRoomTypes]  = useState({});
+  const [viewModal,  setViewModal]  = useState(null);
 
-  const [userNames, setUserNames] = useState({});  
-  const [roomNames, setRoomNames] = useState({});   
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
 
-  useEffect(() => { fetchBookings(); }, []);
-
-  const fetchBookings = async (isRefresh = false) => {
+  const fetchBookings = useCallback(async (isRefresh = false) => {
+    setError(null);
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      setError(null); 
-      if (isRefresh) {
-        setRefreshing(true);
-        setUserNames({});
-        setRoomNames({});
-      } else {
-        setLoading(true);
-      }
-      const res = await axios.get(`${BASE_URL}/api/admin/bookings`);
+      const res  = await api.get(`${BASE_URL}/api/admin/bookings`);
       const data = res.data || [];
       setBookings(data);
 
-      const uniqueUserIds = [...new Set(data.map(b => b.userId))];
-      const uniqueRoomIds = [...new Set(data.map(b => b.roomId))];
+      const uids = [...new Set(data.map(b => b.userId))];
+      const rids = [...new Set(data.map(b => b.roomId))];
 
-      fetchUserNames(uniqueUserIds);
-      fetchRoomNames(uniqueRoomIds);
-    } catch {
-      setError("Failed to load bookings. Make sure the backend is running.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const fetchUserNames = async (userIds) => {
-    const names = {};
-    await Promise.all(
-      userIds.map(async (uid) => {
+      const uNames = {};
+      await Promise.all(uids.map(async uid => {
         try {
-          const res = await axios.get(`${BASE_URL}/api/admin/users/${uid}`);
-          const u = res.data;
-          names[uid] = `${u.firstName || u.first_name || ""} ${u.lastName || u.last_name || ""}`.trim() || `User ${uid}`;
-        } catch {
-          names[uid] = `User ${uid}`; 
-        }
-      })
-    );
-    setUserNames(names);
-  };
+          const r = await api.get(`${BASE_URL}/api/admin/users/${uid}`);
+          const u = r.data;
+          uNames[uid] = `${u.firstName || u.first_name || ""} ${u.lastName || u.last_name || ""}`.trim() || `User ${uid}`;
+        } catch { uNames[uid] = `User ${uid}`; }
+      }));
+      setUserNames(uNames);
 
-  const fetchRoomNames = async (roomIds) => {
-    const names = {};
-    await Promise.all(
-      roomIds.map(async (rid) => {
+      const rNames = {}; const rTyps = {};
+      await Promise.all(rids.map(async rid => {
         try {
-          const res = await axios.get(`${BASE_URL}/api/admin/rooms/${rid}`);
-          names[rid] = res.data.roomName || `Room #${rid}`;
-        } catch {
-          names[rid] = `Room ${rid}`; // fallback
-        }
-      })
-    );
-    setRoomNames(names);
-  };
+          const r  = await api.get(`${BASE_URL}/api/admin/rooms/${rid}`);
+          rNames[rid] = r.data.roomName || `Room ${rid}`;
+          rTyps[rid]  = r.data.roomType?.roomTypeName || "";
+        } catch { rNames[rid] = `Room ${rid}`; rTyps[rid] = ""; }
+      }));
+      setRoomNames(rNames); setRoomTypes(rTyps);
+
+    } catch { setError("Failed to load bookings. Make sure the backend is running."); }
+    finally { setLoading(false); setRefreshing(false); }
+  }, []);
+
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
   const handleStatusChange = (bookingId, newStatus) => {
     setBookings(prev => prev.map(b =>
       b.bookingId === bookingId ? { ...b, bookingStatus: newStatus } : b
     ));
-    showToast(`Booking ${bookingId} updated to ${STATUS_CONFIG[newStatus]?.label} ✓`);
-  };
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    setViewModal(prev => prev?.bookingId === bookingId ? { ...prev, bookingStatus: newStatus } : prev);
+    showToast(`Booking ${bookingId} updated to ${newStatus}`);
   };
 
   const filtered = bookings.filter(b => {
-    const matchTab = tab === "ALL" || b.bookingStatus === tab;
-    const kw       = search.toLowerCase();
-    const userName = (userNames[b.userId] || "").toLowerCase();
-    const roomName = (roomNames[b.roomId] || "").toLowerCase();
-    const matchSearch = !kw
-      || String(b.bookingId).includes(kw)
-      || userName.includes(kw)
-      || roomName.includes(kw)
-      || b.bookingStatus?.toLowerCase().includes(kw);
-    return matchTab && matchSearch;
+    const q = search.toLowerCase();
+    if (q && !(userNames[b.userId] || "").toLowerCase().includes(q) &&
+             !(roomNames[b.roomId] || "").toLowerCase().includes(q) &&
+             !String(b.bookingId).includes(q)) return false;
+    if (fStatus && b.bookingStatus !== fStatus) return false;
+    if (fDate   && b.checkInDate   !== fDate)   return false;
+    return true;
   });
 
-  const stats = {
-    total:     bookings.length,
-    pending:   bookings.filter(b => b.bookingStatus === "PENDING").length,
-    confirmed: bookings.filter(b => b.bookingStatus === "CONFIRMED").length,
-    cancelled: bookings.filter(b => b.bookingStatus === "CANCELLED").length,
-  };
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage   = Math.min(page, totalPages);
+  const slice      = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const clearFilters = () => { setSearch(""); setFStatus(""); setFDate(""); setPage(1); };
 
-  const formatDate   = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-  const nightsBetween = (cin, cout) => {
-    if (!cin || !cout) return "—";
-    const nights = Math.round((new Date(cout) - new Date(cin)) / (1000 * 60 * 60 * 24));
-    return `${nights} night${nights !== 1 ? "s" : ""}`;
-  };
+  const total     = bookings.length;
+  const confirmed = bookings.filter(b => b.bookingStatus === "CONFIRMED").length;
+  const pending   = bookings.filter(b => b.bookingStatus === "PENDING").length;
+  const cancelled = bookings.filter(b => b.bookingStatus === "CANCELLED").length;
 
   return (
     <>
@@ -193,17 +226,40 @@ export default function BookingList() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
-        .bk-row:hover { background: #FFFBEB !important; }
-        .tab-btn:hover { color: #C9A84C !important; }
-        .search-input:focus { border-color: #C9A84C !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
-        @keyframes slideUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
-        @keyframes spin { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
-        .toast { animation: slideUp 0.3s ease; }
+        .bk-row:hover td { background: #FFFBEB !important; transition: background 0.12s; }
+        .fil-input { font-size: 13px; padding: 6px 10px; border: 1.5px solid #E5E7EB; border-radius: 8px; background: #FAFAFA; color: #111827; height: 36px; font-family: inherit; outline: none; transition: border-color 0.15s, background 0.15s; }
+        .fil-input:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+        .btn-outline { font-size: 13px; padding: 6px 16px; border: 1.5px solid #E5E7EB; border-radius: 8px; background: #fff; color: #374151; cursor: pointer; height: 36px; font-family: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: all 0.12s; white-space: nowrap; }
+        .btn-outline:hover { background: #F3F4F6; border-color: #D1D5DB; }
+        .btn-outline:disabled { opacity: 0.6; cursor: not-allowed; }
+        .action-btn { font-size: 12px; padding: 4px 12px; border: 1.5px solid #E5E7EB; border-radius: 6px; background: transparent; color: #374151; cursor: pointer; margin-right: 4px; font-family: inherit; font-weight: 500; transition: all 0.12s; white-space: nowrap; }
+        .action-btn:hover { background: #F3F4F6; border-color: #C9A84C; color: #111827; }
+        .pg-btn { min-width: 28px; height: 28px; font-size: 12px; border: 1.5px solid #E5E7EB; border-radius: 6px; background: #fff; color: #6B7280; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; transition: all 0.12s; }
+        .pg-btn:hover:not(.pg-active):not(:disabled) { background: #F3F4F6; }
+        .pg-active { background: #111827 !important; color: #fff !important; border-color: #111827 !important; }
+        .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .toast { animation: slideUp 0.25s ease; }
+        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+        ::placeholder { color: #C4C9D4; }
       `}</style>
+
+      {}
+      {viewModal && (
+        <ViewModal
+          booking={viewModal}
+          userName={userNames[viewModal.userId]}
+          roomName={roomNames[viewModal.roomId]}
+          roomType={roomTypes[viewModal.roomId]}
+          onClose={() => setViewModal(null)}
+        />
+      )}
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
           {}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
@@ -215,6 +271,7 @@ export default function BookingList() {
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
               <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
+              {}
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
                 <div>
@@ -226,37 +283,25 @@ export default function BookingList() {
             </div>
           </div>
 
-          <div style={{ padding: "32px", flex: 1 }}>
+          <div style={{ padding: "28px 32px", flex: 1 }}>
 
             {}
-            <div style={{ marginBottom: 28, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <div>
-                <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Bookings</h1>
-                <p style={{ fontSize: 14, color: "#6B7280" }}>View and manage all hotel room bookings.</p>
-              </div>
-              <button
-                onClick={() => fetchBookings(true)}
-                disabled={refreshing}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: refreshing ? "#F9FAFB" : "#fff", color: refreshing ? "#9CA3AF" : "#374151", cursor: refreshing ? "not-allowed" : "pointer", transition: "all 0.18s" }}
-              >
-                <span style={{ display: "inline-flex", animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>
-                  <Icons.refresh />
-                </span>
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
+            <div style={{ marginBottom: 24 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>All Bookings</h1>
+              <p style={{ fontSize: 14, color: "#6B7280" }}>View and manage all hotel room bookings.</p>
             </div>
 
             {}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
               {[
-                { label: "Total Bookings", value: stats.total,     color: "#C9A84C" },
-                { label: "Pending",        value: stats.pending,   color: "#F59E0B" },
-                { label: "Confirmed",      value: stats.confirmed, color: "#10B981" },
-                { label: "Cancelled",      value: stats.cancelled, color: "#EF4444" },
-              ].map(({ label, value, color }) => (
-                <div key={label} style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", borderLeft: `4px solid ${color}` }}>
-                  <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 4 }}>{value}</div>
-                  <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>{label}</div>
+                { label: "Total Bookings", value: total,     color: "#111827", border: "#C9A84C" },
+                { label: "Confirmed",      value: confirmed, color: "#065F46", border: "#10B981" },
+                { label: "Pending",        value: pending,   color: "#92400E", border: "#F59E0B" },
+                { label: "Cancelled",      value: cancelled, color: "#991B1B", border: "#EF4444" },
+              ].map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", borderLeft: `4px solid ${s.border}` }}>
+                  <div style={{ fontSize: 11, color: "#6B7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>{s.label}</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -265,143 +310,158 @@ export default function BookingList() {
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
               {}
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-                  {}
-                  <div style={{ display: "flex", gap: 4, background: "#F3F4F6", borderRadius: 10, padding: 4 }}>
-                    {FILTER_TABS.map(t => {
-                      const active = tab === t;
-                      const count  = t === "ALL" ? stats.total : t === "PENDING" ? stats.pending : t === "CONFIRMED" ? stats.confirmed : stats.cancelled;
-                      return (
-                        <button key={t} className="tab-btn" onClick={() => setTab(t)}
-                          style={{ padding: "6px 14px", borderRadius: 7, fontSize: 13, fontWeight: active ? 700 : 500, border: "none", background: active ? "#fff" : "transparent", color: active ? "#111827" : "#6B7280", cursor: "pointer", boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6 }}>
-                          {t.charAt(0) + t.slice(1).toLowerCase()}
-                          <span style={{ background: active ? "#F3F4F6" : "transparent", color: active ? "#6B7280" : "#9CA3AF", fontSize: 11, fontWeight: 600, padding: "1px 6px", borderRadius: 10 }}>{count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {}
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}><Icons.search /></span>
-                    <input className="search-input"
-                      style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 240, color: "#111827" }}
-                      placeholder="Search by name, room, ID..." value={search} onChange={e => setSearch(e.target.value)} />
-                  </div>
+              <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Booking Records</span>
+                <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 10, marginLeft: 4 }}>{total}</span>
+              </div>
+
+              {}
+              <div style={{ padding: "16px 28px", borderBottom: "1px solid #F9FAFB", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input className="fil-input" style={{ paddingLeft: 32, width: "100%" }}
+                    placeholder="Search guest name or booking ID..."
+                    value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
                 </div>
+
+                <select className="fil-input" style={{ minWidth: 140 }} value={fStatus}
+                  onChange={e => { setFStatus(e.target.value); setPage(1); }}>
+                  <option value="">All statuses</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+
+                <input className="fil-input" type="date" style={{ width: 160 }}
+                  value={fDate} onChange={e => { setFDate(e.target.value); setPage(1); }} />
+
+                <button className="btn-outline" onClick={clearFilters}>Clear</button>
+
+                <button className="btn-outline" onClick={() => fetchBookings(true)} disabled={refreshing}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>
+                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </button>
               </div>
 
               {}
               {loading ? (
-                <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading bookings...</div>
+                <div style={{ padding: 56, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading bookings...</div>
               ) : error ? (
-                <div style={{ padding: 48, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
+                <div style={{ padding: 56, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
               ) : filtered.length === 0 ? (
                 <div style={{ padding: 64, textAlign: "center" }}>
-                  <div style={{ color: "#D1D5DB", display: "flex", justifyContent: "center", marginBottom: 16 }}><Icons.empty /></div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>No bookings found</div>
-                  <div style={{ fontSize: 13, color: "#9CA3AF" }}>{search ? "Try a different search keyword." : "No bookings in this category yet."}</div>
+                  <div style={{ fontSize: 40, marginBottom: 14 }}>📋</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 6 }}>No bookings found</div>
+                  <div style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 20 }}>
+                    {search || fStatus || fDate ? "Try clearing the filters." : "No bookings yet."}
+                  </div>
+                  {(search || fStatus || fDate) && (
+                    <button className="btn-outline" onClick={clearFilters}>Clear Filters</button>
+                  )}
                 </div>
               ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: 950 }}>
                     <thead>
                       <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
-                        {["Booking ID", "Guest", "Room", "Check In", "Check Out", "Duration", "Guests", "Total Price", "Status"].map(h => (
-                          <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                        {[
+                          ["Booking ID","90px"],["Guest Name","150px"],["Room","130px"],
+                          ["Type","140px"],["Check-in","105px"],["Check-out","105px"],
+                          ["Nights","70px"],["Total","100px"],["Status","120px"],["Actions","100px"],
+                        ].map(([h, w]) => (
+                          <th key={h} style={{ width: w, textAlign: "left", padding: "11px 16px", color: "#9CA3AF", fontWeight: 700, fontSize: 11, letterSpacing: "0.8px", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                            {h}
+                          </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((b, i) => (
-                        <tr key={b.bookingId} className="bk-row"
-                          style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
+                      {slice.map((b, i) => {
+                        const n = nights(b.checkInDate, b.checkOutDate);
+                        return (
+                          <tr key={b.bookingId} className="bk-row"
+                            style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA", borderBottom: "1px solid #F9FAFB" }}>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <span style={{ fontWeight: 700, color: "#C9A84C", fontSize: 13 }}>Booking {b.bookingId}</span>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <span style={{ fontWeight: 700, color: "#C9A84C", fontSize: 13 }}>{b.bookingId}</span>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#4F46E5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-                                {(userNames[b.userId] || "U").charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
-                                  {userNames[b.userId] || `User ${b.userId}`}
-                                </div>
-                                <div style={{ fontSize: 11, color: "#9CA3AF" }}>ID: {b.userId}</div>
-                              </div>
-                            </div>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: 600, color: "#111827" }}>{userNames[b.userId] || `User ${b.userId}`}</div>
+                              <div style={{ fontSize: 11, color: "#9CA3AF" }}>User ID: {b.userId}</div>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 6, background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                🏨
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
-                                  {roomNames[b.roomId] || `Room ${b.roomId}`}
-                                </div>
-                                <div style={{ fontSize: 11, color: "#9CA3AF" }}>ID: {b.roomId}</div>
-                              </div>
-                            </div>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: 600, color: "#111827" }}>{roomNames[b.roomId] || `Room ${b.roomId}`}</div>
+                              <div style={{ fontSize: 11, color: "#9CA3AF" }}>Room ID: {b.roomId}</div>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#374151" }}>
-                              <Icons.calendar />
-                              {formatDate(b.checkInDate)}
-                            </div>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 12, color: "#6B7280" }}>{roomTypes[b.roomId] || "—"}</span>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#374151" }}>
-                              <Icons.calendar />
-                              {formatDate(b.checkOutDate)}
-                            </div>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap", color: "#374151" }}>
+                              {fmtDate(b.checkInDate)}
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>
-                              {nightsBetween(b.checkInDate, b.checkOutDate)}
-                            </span>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap", color: "#374151" }}>
+                              {fmtDate(b.checkOutDate)}
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px", fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                            {b.numberOfGuest} guest{b.numberOfGuest !== 1 ? "s" : ""}
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 10 }}>
+                                {n}n
+                              </span>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <span style={{ fontWeight: 700, color: "#111827", fontSize: 14 }}>
-                              Rs. {Number(b.totalPrice).toLocaleString()}
-                            </span>
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <span style={{ fontWeight: 700, color: "#111827" }}>Rs. {Number(b.totalPrice).toLocaleString()}</span>
+                            </td>
 
-                          {}
-                          <td style={{ padding: "16px 20px" }}>
-                            <StatusDropdown booking={b} onStatusChange={handleStatusChange} />
-                          </td>
+                            {}
+                            <td style={{ padding: "14px 16px" }}>
+                              <StatusDropdown booking={b} onStatusChange={handleStatusChange} />
+                            </td>
 
-                        </tr>
-                      ))}
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <button className="action-btn" onClick={() => setViewModal(b)}>View</button>
+                            </td>
+
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
 
+              {}
               {filtered.length > 0 && (
-                <div style={{ padding: "12px 24px", borderTop: "1px solid #F3F4F6", fontSize: 13, color: "#9CA3AF" }}>
-                  Showing {filtered.length} of {bookings.length} bookings
+                <div style={{ padding: "14px 28px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, color: "#9CA3AF", marginRight: "auto" }}>
+                    Showing {Math.min((safePage - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(safePage * PER_PAGE, filtered.length)} of {filtered.length} bookings
+                  </span>
+                  <button className="pg-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}>←</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button key={p} className={`pg-btn${p === safePage ? " pg-active" : ""}`} onClick={() => setPage(p)}>{p}</button>
+                  ))}
+                  <button className="pg-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>→</button>
                 </div>
               )}
             </div>

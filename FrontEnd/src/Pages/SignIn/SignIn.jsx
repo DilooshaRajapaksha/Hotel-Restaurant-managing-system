@@ -72,7 +72,7 @@ const SignIn = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post('http://localhost:8081/api/auth/login', {
         email: form.email,
         password: form.password,
       });
@@ -96,7 +96,7 @@ const SignIn = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/google-login', {
+      const response = await axios.post('http://localhost:8081/api/auth/google-login', {
         idToken: credentialResponse.credential
       });
       const data = response.data;
@@ -123,7 +123,7 @@ const SignIn = () => {
 
     window.FB.login((response) => {
       if (response.authResponse) {
-        axios.post('http://localhost:8080/api/auth/facebook-login', {
+        axios.post('http://localhost:8081/api/auth/facebook-login', {
           accessToken: response.authResponse.accessToken
         })
         .then(res => {

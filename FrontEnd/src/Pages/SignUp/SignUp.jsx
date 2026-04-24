@@ -40,7 +40,7 @@ const SignUp = () => {
     };
 
     try {
-      const response = await api.post('http://localhost:8080/api/auth/register', dataToSend);
+      const response = await api.post('http://localhost:8081/api/auth/register', dataToSend);
       console.log('Signup success:', response.data);
       alert('Account created! Please sign in.');
       window.location.href = '/signin';
