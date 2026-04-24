@@ -8,33 +8,33 @@ CREATE TABLE `ROLE`(
 
 CREATE TABLE DELIVERY_STAFF(
 	staff_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+	role_id BIGINT NOT NULL,
 	s_name VARCHAR(255) NOT NULL,
 	email VARCHAR(255) NOT NULL UNIQUE,
-	password_hash VARCHAR(255)  NOT NULL,
+	passward_hash VARCHAR(255)  NOT NULL,
 	contact_number VARCHAR(20) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-	join_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	join_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (role_id) REFERENCES `ROLE`(role_id) ON DELETE CASCADE 
 );
 
 CREATE TABLE `USER`(
 	user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+	role_id BIGINT NOT NULL,
 	first_name VARCHAR(255) NOT NULL,
 	last_name VARCHAR(255) NOT NULL,
 	email VARCHAR(255) NOT NULL UNIQUE,
-	password_hash VARCHAR(255) NOT NULL,
+	passward_hash VARCHAR(255) NOT NULL,
 	phone_number VARCHAR(20) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'ÇUSTOMER',A
-    user_image VARCHAR(500) ,
-	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-ALTER TABLE `USER` 
-MODIFY COLUMN `user_image` LONGTEXT;
+	FOREIGN KEY (role_id) REFERENCES `ROLE`(role_id) ON DELETE CASCADE
+);
 
 CREATE TABLE ROOM_TYPES(
 	room_type_id BIGINT AUTO_INCREMENT PRIMARY KEY,
 	room_type_name VARCHAR(255) NOT NULL,
-	room_description TEXT(255) NOT NULL,
+	room_description VARCHAR(255) NOT NULL,
 	capacity INT NOT NULL
 );
 
@@ -97,8 +97,8 @@ CREATE TABLE MENU_ITEMS(
 	category_id BIGINT NOT NULL,
 	item_name VARCHAR(255) NOT NULL,
 	description TEXT,
-	half_price DECIMAL(10 , 2) NULL CHECK(half_price >= 0),
-    full_price DECIMAL(10 , 2) NULL CHECK(full_price >= 0),
+	half_price DECIMAL(10 , 2) NOT NULL CHECK(half_price >= 0),
+    full_price DECIMAL(10 , 2) NOT NULL CHECK(full_price >= 0),
     price DECIMAL(10 , 2) NOT NULL CHECK(price >= 0),
 	is_available BOOLEAN DEFAULT TRUE,
 	preparation_time INT,
@@ -185,43 +185,3 @@ CREATE INDEX idx_booking_room ON BOOKING(room_id);
 CREATE INDEX idx_booking_dates ON BOOKING(check_in_date, check_out_date);
 CREATE INDEX idx_order_user ON FOOD_ORDER(user_id);
 CREATE INDEX idx_payment_user ON PAYMENT(user_id);
-
-INSERT INTO `ROLE` (name) VALUES ('CUSTOMER');
-INSERT INTO `ROLE` (name) VALUES ('ADMIN');
-INSERT INTO `ROLE` (name) VALUES ('DELIVERY_STAFF');
-
-SELECT * FROM `ROLE`;
-
-SELECT * FROM `USER`;
-Describe USer;
-
-SELECT * FROM `ROOM`;
-
-SELECT * FROM room_types;
-
-INSERT INTO `ROOM_TYPES`(room_type_name , room_description , capacity) VALUES ('Single' , '1bed' ,1 );
-INSERT INTO `ROOM_TYPES`(room_type_name , room_description , capacity) VALUES ('Double' , '2bed' ,3 );
-INSERT INTO `ROOM_TYPES`(room_type_name , room_description , capacity) VALUES ('Family' , '4bed' ,5 );
-
-INSERT INTO `ROOM`(room_name , room_type_id , room_price) VALUES ('Room1' , 1 , '2500');
-INSERT INTO `ROOM`(room_name , room_type_id , room_price) VALUES ('Room2' , 2 , '5500');
-INSERT INTO `ROOM`(room_name , room_type_id , room_price) VALUES ('Room3' , 2 , '10000');
-INSERT INTO `ROOM`(room_name , room_type_id , room_price) VALUES ('Rooom4' , 3 , '25000');
-
-SELECT*FROM HOTEL_IMAGE;
-INSERT INTO HOTEL_IMAGE (room_id, Rimage_url, is_main) VALUES
-(1, 'https://picsum.photos/id/1015/800/600', TRUE),   -- Nice single room
-(2, 'https://picsum.photos/id/160/800/600', TRUE),    -- Double room
-(3, 'https://picsum.photos/id/201/800/600', TRUE),    -- Another double
-(4, 'https://picsum.photos/id/251/800/600', TRUE),    -- Luxury feel
-(5, 'https://picsum.photos/id/133/800/600', TRUE);
-
-
-SELECT 
-    r.room_id,
-    r.room_name,
-    hi.Rimage_url,
-    hi.is_main
-FROM ROOM r
-LEFT JOIN HOTEL_IMAGE hi ON r.room_id = hi.room_id 
-ORDER BY r.room_id;
