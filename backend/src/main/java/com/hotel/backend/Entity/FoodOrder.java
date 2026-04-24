@@ -26,7 +26,7 @@ public class FoodOrder {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
-    @Column(name = "order_date", insertable = false, updatable = false)
+    @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
     @Column(name = "total_amount", nullable = false)
