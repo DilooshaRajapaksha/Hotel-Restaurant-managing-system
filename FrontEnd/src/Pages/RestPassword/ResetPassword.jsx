@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import '../SignIn/SignIn.css';
-import axios from 'axios';
+import api from '../../utils/axiosInstance';
 import Logo from '../../assets/Pictures/SignInLogo.png';
 
 const ResetPassword = () => {
@@ -25,7 +25,7 @@ const ResetPassword = () => {
     }
     setLoading(true);
     try {
-      await axios.post('http://localhost:8080/api/auth/reset-password', { token, newPassword });
+      await api.post('http://localhost:8081/api/auth/reset-password', { token, newPassword });
       setMessage('Password reset successfully! Redirecting to sign in...');
       setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {

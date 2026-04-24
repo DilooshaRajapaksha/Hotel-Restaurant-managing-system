@@ -11,6 +11,7 @@ import com.hotel.backend.Repo.RoomRepo;
 import com.hotel.backend.Repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -77,14 +78,10 @@ public class BookingService {
         }
 
         List<Booking> overlapping = bookingRepo.findOverlappingBookings(
-                roomId,
-                checkInDate,
-                checkOutDate,
-                Booking.BookingStatus.PENDING,
-                Booking.BookingStatus.CONFIRMED
-        );
+                roomId, checkInDate, checkOutDate,
+                Booking.BookingStatus.PENDING, Booking.BookingStatus.CONFIRMED);
         if (!overlapping.isEmpty()) {
-            Booking conflict = overlapping.get(0);
+            Booking c = overlapping.get(0);
             throw new RuntimeException(
                     "Room is already booked from " + conflict.getCheckInDate() +
                             " to " + conflict.getCheckOutDate() +
@@ -92,8 +89,7 @@ public class BookingService {
         }
 
         long nights = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-        BigDecimal totalPrice = room.getRoomPrice()
-                .multiply(BigDecimal.valueOf(nights));
+        BigDecimal totalPrice = room.getRoomPrice().multiply(BigDecimal.valueOf(nights));
 
         Booking booking = new Booking();
         booking.setUserId(userId);
@@ -105,11 +101,29 @@ public class BookingService {
         booking.setTotalPrice(totalPrice);
         booking.setBookingStatus(Booking.BookingStatus.PENDING);
 
+        Booking saved;
         try {
-            return bookingRepo.save(booking);
+            saved = bookingRepo.save(booking);
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("User with id " + userId + " does not exist. The user must be registered before making a booking.");
         }
+
+        // Push WebSocket notification to admin
+        User user = userRepo.findById(userId).orElse(null);
+        String customerName = user != null
+                ? user.getFirstName() + " " + user.getLastName()
+                : "Guest";
+        String msg = customerName + " · " + room.getRoomName()
+                + " · " + checkInDate + " → " + checkOutDate;
+        NotificationPayloadDTO notif = new NotificationPayloadDTO(
+                NotificationPayloadDTO.Type.BOOKING,
+                saved.getBookingId(),
+                "New Booking #" + saved.getBookingId(),
+                msg
+        );
+        messagingTemplate.convertAndSend("/topic/admin-notifications", notif);
+
+        return saved;
     }
 
     public Booking updateBookingStatus(Long id, Booking.BookingStatus newStatus) {
@@ -119,12 +133,28 @@ public class BookingService {
         return bookingRepo.save(booking);
     }
 
-    public void deleteBooking(Long id) {
-        bookingRepo.deleteById(id);
-    }
+    public void deleteBooking(Long id) { bookingRepo.deleteById(id); }
 
-    public List<Booking> searchBookings(String keyword) {
-        return bookingRepo.searchBookings(keyword);
+    public Booking createBooking(BookingRequestDTO dto) {
+        LocalDate checkIn  = LocalDate.parse(dto.getCheckInDate());
+        LocalDate checkOut = LocalDate.parse(dto.getCheckOutDate());
+
+        User user = userRepo.findByEmail(dto.getEmail())
+                .orElseGet(() -> {
+                    User nu = new User();
+                    nu.setFirstName(dto.getFirstName());
+                    nu.setLastName(dto.getLastName() != null ? dto.getLastName() : "");
+                    nu.setEmail(dto.getEmail());
+                    nu.setPhoneNumber(dto.getPhoneNumber());
+                    nu.setPasswordHash("temp-no-password");
+                    Role r = roleRepo.findByName("CUSTOMER")
+                            .orElseThrow(() -> new RuntimeException("Default customer role not found"));
+                    nu.setRole(String.valueOf(r));
+                    return userRepo.save(nu);
+                });
+
+        return createBooking(user.getUserId(), dto.getRoomId(), checkIn, checkOut,
+                dto.getNumberOfGuest(), dto.getSpecialRequest());
     }
 
     public Booking createBooking(BookingRequestDTO dto) {

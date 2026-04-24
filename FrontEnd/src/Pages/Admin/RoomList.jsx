@@ -5,10 +5,11 @@ import api from "../../Utils/axiosInstance";
 
 const BASE_URL = "http://localhost:8080";
 
+
 const Icons = {
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   edit: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
-  bell: () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>),
+  trash: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>),
   search: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
   empty: () => (<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>),
   warning: () => (<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>),
@@ -17,11 +18,8 @@ const Icons = {
 };
 
 const STATUS_COLORS = {
-  available:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981" },
-  unavailable: { bg: "#FEE2E2", color: "#991B1B", dot: "#EF4444" },
-  maintenance: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B" },
-  AVAILABLE: { bg: "#D1FAE5", color: "#065F46", dot: "#10B981" },
-  MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B" },
+  AVAILABLE:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981", label: "Available"   },
+  MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Maintenance" },
 };
 
 function RoomThumbnail({ roomId }) {
@@ -146,10 +144,6 @@ export default function RoomList() {
   const [deleteError,  setDeleteError]  = useState(null); 
 
   useEffect(() => { fetchRooms(); }, []);
-  useEffect(() => {
-    fetchRooms();
-    fetchRoomTypes();
-  }, []);
 
   const fetchRooms = async () => {
     try {
@@ -190,24 +184,7 @@ export default function RoomList() {
 
   const filteredRooms = rooms.filter(room =>
     room.roomName?.toLowerCase().includes(search.toLowerCase()) ||
-    room.roomType?.toLowerCase().includes(search.toLowerCase())
-  const fetchRoomTypes = async () => {
-    try {
-      const res = await axios.get("http://localhost:8081/api/admin/room-types");
-      setRoomTypes(res.data);
-    } catch (err) {
-      console.error("Failed to load room types:", err);
-    }
-  };
-
-  const getRoomTypeName = (roomTypeId) => {
-    const roomType = roomTypes.find(rt => rt.room_type_id === roomTypeId);
-    return roomType ? roomType.room_type_name : 'Unknown';
-  };
-
-  const filteredRooms = rooms.filter(room =>
-    room.room_name?.toLowerCase().includes(search.toLowerCase()) ||
-    getRoomTypeName(room.room_type_id)?.toLowerCase().includes(search.toLowerCase())
+    room.roomType?.roomTypeName?.toLowerCase().includes(search.toLowerCase())
   );
 
   const availableCount   = rooms.filter(r => r.roomStatus === "AVAILABLE").length;
@@ -219,7 +196,6 @@ export default function RoomList() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
-        .room-row { transition: background 0.15s; }
         .room-row:hover { background: #FFFBEB !important; }
         .room-row:hover .room-thumb img { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .room-thumb img { transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -293,11 +269,6 @@ export default function RoomList() {
               </div>
               <button className="add-btn" onClick={() => navigate("/admin/rooms/add")}
                 style={{ padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
-              <button
-                className="add-btn"
-                onClick={() => navigate("/admin/rooms/add")}
-                style={{ padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}
-              >
                 <Icons.plus /> Add New Room
               </button>
             </div>
@@ -305,15 +276,9 @@ export default function RoomList() {
             {}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
-                { label: "Total Rooms", value: rooms.length, color: "#C9A84C" },
-                { label: "Available", value: rooms.filter(r => r.availability === "available").length, color: "#10B981" },
-                { label: "Unavailable / Maintenance", value: rooms.filter(r => r.availability !== "available").length, color: "#EF4444" },
-            {/* Stats cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-              {[
-                { label: "Total Rooms", value: rooms.length, color: "#C9A84C" },
-                { label: "Available", value: rooms.filter(r => r.room_status === "AVAILABLE").length, color: "#10B981" },
-                { label: "Under Maintenance", value: rooms.filter(r => r.room_status === "MAINTENANCE").length, color: "#EF4444" },
+                { label: "Total Rooms",   value: rooms.length,    color: "#C9A84C" },
+                { label: "Available",     value: availableCount,  color: "#10B981" },
+                { label: "Maintenance",   value: maintenanceCount, color: "#F59E0B" },
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", borderLeft: `4px solid ${color}` }}>
                   <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 4 }}>{value}</div>
@@ -322,8 +287,7 @@ export default function RoomList() {
               ))}
             </div>
 
-            {/* Table card */}
-            {/* Search bar */}
+            {}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -339,17 +303,6 @@ export default function RoomList() {
                 </div>
               </div>
 
-                  <input
-                    className="search-input"
-                    style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 220, color: "#111827" }}
-                    placeholder="Search rooms..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Table */}
               {loading ? (
                 <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading rooms...</div>
               ) : error ? (
@@ -364,9 +317,8 @@ export default function RoomList() {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
-                      {["ID", "Room Name", "Type", "Capacity", "Availability", "Action"].map(h => (
-                      {["ID", "Room Name", "Type", "Price", "Status", "Action"].map(h => (
-                        <th key={h} style={{ padding: "12px 24px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase" }}>{h}</th>
+                      {["ID", "Image", "Room Name", "Type", "Price", "Capacity", "Status", "Action"].map(h => (
+                        <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>

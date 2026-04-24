@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../../Utils/axiosInstance";
 
 const Icons = {
   upload: () => (
@@ -60,7 +60,7 @@ export default function AddFood() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:8081/api/admin/menu-categories");
+      const res = await api.get("http://localhost:8081/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch (e) {
       console.error("Failed to load categories:", e);
@@ -151,7 +151,7 @@ export default function AddFood() {
 
       images.forEach((img) => formData.append("images", img));
 
-      await axios.post("http://localhost:8081/api/admin/menu-items", formData, {
+      await api.post("http://localhost:8081/api/admin/menu-items", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

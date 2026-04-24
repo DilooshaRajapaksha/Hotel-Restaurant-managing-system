@@ -1,11 +1,6 @@
 package com.hotel.backend.Entity;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
-
-@Entity
-@Table(name = "ROOM")
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;

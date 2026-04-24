@@ -19,30 +19,33 @@ public class FileStorageService {
     }
 
     public String saveMenuImage(MultipartFile file) throws IOException {
-        Files.createDirectories(root);
+        Path menuDir = root.resolve("menu").normalize();
+        Files.createDirectories(menuDir);
 
-        String original = StringUtils.cleanPath(file.getOriginalFilename() == null ? "image" : file.getOriginalFilename());
+        String original = StringUtils.cleanPath(
+                file.getOriginalFilename() == null ? "image" : file.getOriginalFilename()
+        );
+
         String ext = "";
-
         int dot = original.lastIndexOf('.');
-        if (dot >= 0) ext = original.substring(dot);
+        if (dot >= 0) {
+            ext = original.substring(dot);
+        }
 
         String filename = UUID.randomUUID() + ext;
-        Path target = root.resolve(filename);
+        Path target = menuDir.resolve(filename);
 
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
-        // This is the URL path React using:
-        // http://localhost:8081/uploads/menu/<filename>
         return "/uploads/menu/" + filename;
     }
 
     public void deleteByUrl(String urlPath) {
         try {
-            // urlPath like "/uploads/menu/abc.png"
-            String filename = Paths.get(urlPath).getFileName().toString();
-            Path file = root.resolve(filename).normalize();
+            Path relativePath = Paths.get(urlPath.replaceFirst("^/uploads/", ""));
+            Path file = root.resolve(relativePath).normalize();
             Files.deleteIfExists(file);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

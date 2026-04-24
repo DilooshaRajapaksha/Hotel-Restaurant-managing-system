@@ -34,10 +34,11 @@ const Navbar = () => {
                 className="profile-link-btn"
                 onClick={() => setIsProfileOpen(true)}
               >
-                <img 
-                  src={user.picture || 'https://via.placeholder.com/45'} 
-                  alt="Profile" 
-                  className="profile-pic" 
+                <img
+                  src={user.userImage || user.picture || 'https://via.placeholder.com/45'}
+                  alt="Profile"
+                  className="profile-pic"
+                  key={user.email || 'profile-avatar'}
                 />
               </button>
             ) : (

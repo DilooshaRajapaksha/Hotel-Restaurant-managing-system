@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../../Utils/axiosInstance";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
 
 const Icons = {
@@ -75,7 +75,7 @@ export default function AddCategory() {
       setErrors({});
       setSubmitStatus(null);
 
-      await axios.post("http://localhost:8081/api/admin/menu-categories", {
+      await api.post("http://localhost:8081/api/admin/menu-categories", {
         category_name: form.category_name.trim(),
         description: form.description.trim(),
         is_active: form.is_active,

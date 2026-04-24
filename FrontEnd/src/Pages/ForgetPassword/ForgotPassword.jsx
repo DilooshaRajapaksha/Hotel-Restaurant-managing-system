@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../SignIn/SignIn.css';
-import axios from 'axios';
+import api from '../../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Pictures/SignInLogo.png';
 import './ForgotPassword.css';
@@ -16,7 +16,7 @@ const ForgotPassword = () => {
     setLoading(true);
     setMessage('');
     try {
-      await axios.post('http://localhost:8080/api/auth/forgot-password', { email });
+      await api.post('http://localhost:8081/api/auth/forgot-password', { email });
       setMessage('Reset link sent to your email. Check your inbox.');
     } catch (err) {
       setMessage(err.response?.data || 'Failed to send reset link');

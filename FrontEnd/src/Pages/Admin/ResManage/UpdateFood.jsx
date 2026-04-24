@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import axios from "axios";
+import api from "../../../Utils/axiosInstance";
 
 const Icons = {
   xIcon: () => (
@@ -105,7 +105,7 @@ export default function UpdateFood() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("http://localhost:8081/api/admin/menu-categories");
+      const res = await api.get("http://localhost:8081/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch (e) {
       console.error("Failed to load categories:", e);
@@ -116,7 +116,7 @@ export default function UpdateFood() {
     try {
       setIsFetching(true);
 
-      const res = await axios.get(`http://localhost:8081/api/admin/menu-items/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/menu-items/${id}`);
       const item = res.data;
 
       setForm({
@@ -130,7 +130,7 @@ export default function UpdateFood() {
         is_available: !!item.is_available,
       });
 
-      const imgRes = await axios.get(`http://localhost:8081/api/admin/menu-items/${id}/images`);
+      const imgRes = await api.get(`http://localhost:8081/api/admin/menu-items/${id}/images`);
       setExistingImages(imgRes.data || []);
     } catch (err) {
       console.error(err);
@@ -178,7 +178,7 @@ export default function UpdateFood() {
 
   const removeExistingImage = async (imageId) => {
     try {
-      await axios.delete(`http://localhost:8081/api/admin/menu-images/${imageId}`);
+      await api.delete(`http://localhost:8081/api/admin/menu-images/${imageId}`);
       setExistingImages((prev) => prev.filter((img) => (img.Fimage_id ?? img.fimage_id) !== imageId));
     } catch (err) {
       console.error("Failed to delete image:", err);
@@ -237,7 +237,7 @@ export default function UpdateFood() {
       // new images
       images.forEach((img) => formData.append("images", img));
 
-      await axios.put(`http://localhost:8081/api/admin/menu-items/${id}`, formData, {
+      await api.put(`http://localhost:8081/api/admin/menu-items/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

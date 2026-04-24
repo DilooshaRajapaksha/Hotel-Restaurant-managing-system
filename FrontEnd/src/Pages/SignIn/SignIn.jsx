@@ -17,7 +17,7 @@ const SignIn = () => {
   useEffect(() => {
     window.fbAsyncInit = function () {
       window.FB.init({
-        appId: 'YOUR_REAL_FACEBOOK_APP_ID',      // ← change this
+        appId: 'YOUR_REAL_FACEBOOK_APP_ID',
         cookie: true,
         xfbml: true,
         version: 'v20.0'
@@ -38,25 +38,55 @@ const SignIn = () => {
     setError('');
   };
 
+  const getDashboardPath = (role) => {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN':
+        return '/admin';
+      case 'CUSTOMER':
+        return '/';
+      case 'DELIVERY':
+      case 'DELIVERY_STAFF':
+        return '/delivery';
+      default:
+        return '/';
+    }
+  };
+
+  const mapUserFromAuth = (data) => {
+    const u = data.user;
+    const img = u.userImage || u.picture || '';
+    return {
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      phoneNumber: u.phoneNumber,
+      picture: img,
+      userImage: img,
+      role: u.role,
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post('http://localhost:8081/api/auth/login', {
         email: form.email,
         password: form.password,
       });
       const data = response.data;
-      const user = {
-        name: `${data.user.firstName} ${data.user.lastName}`,
-        email: data.user.email,
-        picture: '',
-        role: data.user.role
-      };
+      const user = mapUserFromAuth(data);
       login(user);
-      localStorage.setItem('token', data.token);
-      navigate('/');
+
+      if (user.role?.toUpperCase() === 'ADMIN') {
+        localStorage.setItem('adminToken', data.token);
+      } else {
+        localStorage.setItem('customerToken', data.token);
+      }
+
+      navigate(getDashboardPath(user.role));
     } catch (err) {
       setError(err.response?.data || 'Invalid email or password.');
     } finally {
@@ -66,19 +96,20 @@ const SignIn = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/google-login', {
+      const response = await axios.post('http://localhost:8081/api/auth/google-login', {
         idToken: credentialResponse.credential
       });
       const data = response.data;
-      const user = {
-        name: `${data.user.firstName} ${data.user.lastName}`,
-        email: data.user.email,
-        picture: '',
-        role: data.user.role
-      };
+      const user = mapUserFromAuth(data);
       login(user);
-      localStorage.setItem('token', data.token);
-      navigate('/');
+
+      if (user.role?.toUpperCase() === 'ADMIN') {
+        localStorage.setItem('adminToken', data.token);
+      } else {
+        localStorage.setItem('customerToken', data.token);
+      }
+
+      navigate(getDashboardPath(user.role));
     } catch (err) {
       setError('Google login failed');
     }
@@ -92,20 +123,21 @@ const SignIn = () => {
 
     window.FB.login((response) => {
       if (response.authResponse) {
-        axios.post('http://localhost:8080/api/auth/facebook-login', {
+        axios.post('http://localhost:8081/api/auth/facebook-login', {
           accessToken: response.authResponse.accessToken
         })
         .then(res => {
           const data = res.data;
-          const user = {
-            name: `${data.user.firstName} ${data.user.lastName}`,
-            email: data.user.email,
-            picture: '',
-            role: data.user.role
-          };
+          const user = mapUserFromAuth(data);
           login(user);
-          localStorage.setItem('token', data.token);
-          navigate('/');
+
+          if (user.role?.toUpperCase() === 'ADMIN') {
+            localStorage.setItem('adminToken', data.token);
+          } else {
+            localStorage.setItem('customerToken', data.token);
+          }
+
+          navigate(getDashboardPath(user.role));
         })
         .catch(() => setError('Facebook login failed'));
       } else {
@@ -174,7 +206,6 @@ const SignIn = () => {
               useOneTap
               text="signin_with"
               shape="pill"
-              width="100%"
             />
           </div>
 

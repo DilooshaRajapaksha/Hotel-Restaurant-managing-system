@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminTopBar from "../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import api from "../../Utils/axiosInstance";
 
@@ -108,34 +109,87 @@ export default function AdminDashboard() {
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
         .nav-card:hover { background: #FFFBEB !important; border-color: #C9A84C !important; }
         .nav-card { transition: all 0.18s; }
+
+        /* Bell button */
+        .bell-btn {
+          position: relative;
+          width: 38px; height: 38px;
+          border-radius: 50%;
+          border: 1.5px solid #E5E7EB;
+          background: #fff;
+          cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          padding: 0;
+          transition: all 0.18s;
+          font-size: 18px;
+        }
+        .bell-btn:hover { background: #FFFBEB; border-color: #C9A84C; }
+        .bell-badge {
+          position: absolute;
+          top: -4px; right: -4px;
+          min-width: 18px; height: 18px;
+          border-radius: 999px;
+          background: #EF4444;
+          color: #fff;
+          font-size: 10px;
+          font-weight: 800;
+          display: flex; align-items: center; justify-content: center;
+          border: 2px solid #fff;
+          padding: 0 3px;
+          animation: badgePop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes badgePop {
+          from { transform: scale(0); }
+          to   { transform: scale(1); }
+        }
+      
+        /* ── Mobile: no horizontal scroll ── */
+        @media (max-width: 768px) {
+          .admin-page-root { overflow-x: hidden !important; }
+          .admin-content-area { padding: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-area { padding: 12px !important; }
+        }
+      
+        @media (max-width: 768px) {
+          .admin-content-wrap { padding: 16px 14px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-wrap { padding: 12px 10px !important; }
+        }
+      
+        /* Dashboard responsive grids */
+        .dash-stat  { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
+        .dash-room  { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+        .dash-chart { display: grid; grid-template-columns: 1fr 380px; gap: 20px; margin-bottom: 20px; }
+        .dash-sum   { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; }
+        @media (max-width: 1100px) {
+          .dash-chart { grid-template-columns: 1fr; }
+          .dash-sum   { grid-template-columns: repeat(3,1fr); }
+        }
+        @media (max-width: 768px) {
+          .dash-stat  { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .dash-room  { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .dash-sum   { grid-template-columns: repeat(2,1fr); gap: 10px; }
+        }
+        @media (max-width: 480px) {
+          .dash-stat  { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .dash-room  { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .dash-sum   { grid-template-columns: repeat(2,1fr); gap: 8px; }
+        }
       `}</style>
 
-      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      {/* Toast (top center) */}
+
+      {/* Right drawer */}
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", overflowX: "hidden", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <AdminTopBar pageTitle="Reports & Dashboard" />
 
-          {/* Topbar */}
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Reports & Dashboard</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
-              <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
-                  <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
+      {/* Topbar */}
+       <div className="admin-content-wrap" style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
 
             {/* Page title */}
             <div style={{ marginBottom: 28 }}>
@@ -151,27 +205,21 @@ export default function AdminDashboard() {
               <div style={{ padding: 80, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
             ) : (
               <>
-                {}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
+                <div className="dash-stat" style={{}}>
                   <StatCard label="Total Revenue"    value={fmtR(data.totalRevenue)}    color="#C9A84C" icon="💰" sub="From confirmed bookings" />
                   <StatCard label="Total Bookings"   value={fmt(data.totalBookings)}    color="#6366F1" icon="📅" sub={`${fmt(data.confirmedBookings)} confirmed`} />
                   <StatCard label="Registered Users" value={fmt(data.totalUsers)}       color="#F59E0B" icon="👥" sub="Customers" />
                   <StatCard label="Menu Items"       value={fmt(data.totalMenuItems)}   color="#F97316" icon="🍽️" sub={`${fmt(data.totalMenuCategories)} categories`} />
                 </div>
 
-                {}
                 <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>🏨 Room Availability</div>
                   <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Current status of all {fmt(data.totalRooms)} rooms</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-
-                    {}
+                  <div className="dash-room" style={{}}>
                     <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #C9A84C" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#C9A84C" }}>{fmt(data.totalRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Total Rooms</div>
                     </div>
-
-                    {}
                     <div style={{ background: "#F0FDF4", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #10B981" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#10B981" }}>{fmt(data.availableRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Available</div>
@@ -179,8 +227,6 @@ export default function AdminDashboard() {
                         <div style={{ height: "100%", width: `${data.totalRooms > 0 ? (data.availableRooms / data.totalRooms) * 100 : 0}%`, background: "#10B981", borderRadius: 4 }} />
                       </div>
                     </div>
-
-                    {}
                     <div style={{ background: "#FFF5F5", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #EF4444" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#EF4444" }}>{fmt(data.unavailableRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Unavailable</div>
@@ -188,8 +234,6 @@ export default function AdminDashboard() {
                         <div style={{ height: "100%", width: `${data.totalRooms > 0 ? (data.unavailableRooms / data.totalRooms) * 100 : 0}%`, background: "#EF4444", borderRadius: 4 }} />
                       </div>
                     </div>
-
-                    {}
                     <div style={{ background: "#FFFBEB", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #F59E0B" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#F59E0B" }}>{fmt(data.maintenanceRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Maintenance</div>
@@ -197,14 +241,10 @@ export default function AdminDashboard() {
                         <div style={{ height: "100%", width: `${data.totalRooms > 0 ? (data.maintenanceRooms / data.totalRooms) * 100 : 0}%`, background: "#F59E0B", borderRadius: 4 }} />
                       </div>
                     </div>
-
                   </div>
                 </div>
 
-                {}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
-
-                  {}
+                <div className="dash-chart" style={{}}>
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -217,8 +257,6 @@ export default function AdminDashboard() {
                     </div>
                     <BarChart data={Array.from(data.monthlyBookings)} color="#6366F1" />
                   </div>
-
-                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>Booking Status</div>
                     <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Distribution by status</div>
@@ -245,10 +283,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
-
-                  {}
+                <div className="dash-chart" style={{}}>
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -261,13 +296,10 @@ export default function AdminDashboard() {
                     </div>
                     <BarChart data={Array.from(data.monthlyRevenue).map(Number)} color="#C9A84C" formatValue={fmtR} />
                   </div>
-
-                  {}
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>⚡ Quick Actions</div>
                     <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Jump to a section</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {}
                       {[
                         { label: "View All Rooms",    path: "/admin/rooms",    icon: "🏨", sub: `${fmt(data.totalRooms)} rooms total`    },
                         { label: "Add New Room",      path: "/admin/rooms/add",icon: "➕", sub: "Add a new hotel room"                   },
@@ -287,12 +319,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {}
                 <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>🏆 Most Booked Rooms</div>
                   <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Top 5 rooms by total bookings</div>
                   {data.topBookedRooms.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "24px 0", color: "#9CA3AF", fontSize: 13 }}>No booking data yet — bookings will appear here once customers start reserving rooms.</div>
+                    <div style={{ textAlign: "center", padding: "24px 0", color: "#9CA3AF", fontSize: 13 }}>No booking data yet.</div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                       {data.topBookedRooms.map((room, i) => {
@@ -320,13 +351,12 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {}
                 <div style={{ background: "linear-gradient(135deg,#0F1923,#1E2D3D)", borderRadius: 14, padding: "28px 32px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
                     📊 {data.currentYear} Year Summary
                   </div>
                   <div style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 24 }}>Golden Stars Hotel & Restaurant — annual overview</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }}>
+                  <div className="dash-sum" style={{}}>
                     {[
                       { label: "Total Rooms",   value: fmt(data.totalRooms),        icon: "🏨", color: "#C9A84C" },
                       { label: "Available",     value: fmt(data.availableRooms),    icon: "✅", color: "#10B981" },
@@ -352,3 +382,4 @@ export default function AdminDashboard() {
     </>
   );
 }
+

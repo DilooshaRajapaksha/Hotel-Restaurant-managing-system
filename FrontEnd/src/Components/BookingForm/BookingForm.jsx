@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DateRangePickerWrapper from '../DateRangePickerWrapper/DateRangePickerWrapper';
 import './BookingForm.css';
 
@@ -12,13 +12,16 @@ const BookingForm = ({ room, onBookingSuccess }) => {
   ]);
 
   const [guests, setGuests] = useState(1);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [specialReq, setSpecialReq] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const customerToken = localStorage.getItem('customerToken');
+    setIsLoggedIn(!!customerToken);
+  }, []);
 
   const nights = Math.max(
     1,
@@ -34,39 +37,95 @@ const BookingForm = ({ room, onBookingSuccess }) => {
     setLoading(true);
     setError(null);
 
+    if (!room?.id) {
+      setError("Room information is missing.");
+      setLoading(false);
+      return;
+    }
+
+    if (dateRange[0].endDate <= dateRange[0].startDate) {
+      setError("Check-out date must be after check-in date.");
+      setLoading(false);
+      return;
+    }
+
     const payload = {
       roomId: room.id,
       checkInDate: dateRange[0].startDate.toISOString().split('T')[0],
       checkOutDate: dateRange[0].endDate.toISOString().split('T')[0],
       numberOfGuest: guests,
-      firstName: name.split(' ')[0] || name,
-      lastName: name.split(' ').slice(1).join(' ') || '',
-      email,
-      phoneNumber: phone,
-      specialRequest: specialReq,
-      totalPrice,
+      specialRequest: specialReq.trim(),
     };
 
+    console.log("Sending booking payload:", payload);
+
     try {
-      const res = await fetch('http://localhost:8080/api/bookings', {
+      const res = await fetch('http://localhost:8081/api/customer/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('customerToken') || ''}`
+        },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Booking failed');
+        let errorMsg = `Booking failed (${res.status})`;
+
+        try {
+          const errData = await res.json();
+          console.error("Server error response:", errData);
+          errorMsg = errData.message || errData.error || JSON.stringify(errData);
+        } catch (e) {
+          try {
+            const text = await res.text();
+            console.error("Raw server response text:", text);
+            errorMsg = text || errorMsg;
+          } catch (_) {}
+        }
+
+        throw new Error(errorMsg);
       }
 
+      const data = await res.json();
+      console.log("Booking successful:", data);
+
       setSuccess(true);
-      if (onBookingSuccess) onBookingSuccess();
+      setError(null);
+      if (onBookingSuccess) onBookingSuccess(data);
+
     } catch (err) {
-      setError(err.message);
+      console.error("Booking error:", err);
+      setError(err.message || "Failed to create booking. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="booking-form" style={{ textAlign: 'center', padding: '40px 20px' }}>
+        <h2>Book This Room</h2>
+        <p style={{ color: '#d32f2f', fontSize: '1.1rem', margin: '20px 0' }}>
+          You must be logged in to book a room.
+        </p>
+        <button 
+          onClick={() => window.location.href = '/login'}
+          style={{
+            background: '#d4af37',
+            color: 'white',
+            border: 'none',
+            padding: '14px 32px',
+            fontSize: '1.1rem',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form className="booking-form" onSubmit={handleSubmit}>
@@ -81,12 +140,12 @@ const BookingForm = ({ room, onBookingSuccess }) => {
       </div>
 
       <div className="form-group">
-        <label>Guests</label>
+        <label>Number of Guests</label>
         <select
           value={guests}
           onChange={(e) => setGuests(Number(e.target.value))}
         >
-          {[...Array(room?.capacity || 4)].map((_, i) => (
+          {[...Array(Math.max(1, room?.capacity || 4))].map((_, i) => (
             <option key={i + 1} value={i + 1}>
               {i + 1} Guest{i > 0 ? 's' : ''}
             </option>
@@ -104,47 +163,18 @@ const BookingForm = ({ room, onBookingSuccess }) => {
       </div>
 
       <div className="form-group">
-        <label>Full Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Phone</label>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
         <label>Special Requests (optional)</label>
         <textarea
           value={specialReq}
           onChange={(e) => setSpecialReq(e.target.value)}
           rows={3}
+          placeholder="Any special requests or notes..."
         />
       </div>
 
-      {error && <div className="error-msg">{error}</div>}
+      {error && <div className="error-msg" style={{ color: 'red', margin: '10px 0' }}>{error}</div>}
       {success && (
-        <div className="success-msg">
+        <div className="success-msg" style={{ color: 'green', margin: '10px 0' }}>
           Booking successful! Check your email for confirmation.
         </div>
       )}

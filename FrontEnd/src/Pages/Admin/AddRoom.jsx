@@ -5,21 +5,51 @@ import api from "../../Utils/axiosInstance";
 
 const BASE_URL = "http://localhost:8080";
 
-const AMENITIES_LIST = [
-  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
-  "Room Service", "Balcony", "Garden View", "Safe Box",
-  "Free Parking", "Tea/Coffee Maker", "Breakfast Included",
-const ROOM_TYPES = ["Standard", "Deluxe", "Suite", "Family Room", "Executive", "Penthouse"];
-const AMENITIES_LIST = [
-  "Air Conditioning", "Free WiFi", "Flat Screen TV", "Mini Bar",
-  "Room Service", "Balcony", "Sea View", "Garden View",
-  "Jacuzzi", "King Size Bed", "Safe Box", "Hair Dryer",
+const FALLBACK_ROOM_TYPES = [
+  { roomTypeName: "Two-Bedroom Villa",                        capacity: 4 },
+  { roomTypeName: "Single Double Bed with Private Bathroom",  capacity: 2 },
+  { roomTypeName: "Double Room with Balcony",                 capacity: 2 },
+  { roomTypeName: "Triple Room with Balcony",                 capacity: 3 },
+  { roomTypeName: "Double Room with Private Bathroom",        capacity: 2 },
+  { roomTypeName: "Triple Room with Bathroom",                capacity: 3 },
+  { roomTypeName: "Family Room",                              capacity: 4 },
+];
+
+const FACILITY_CATEGORIES = [
+  {
+    category: "General",
+    icon: "🏨",
+    items: ["WiFi", "Free WiFi", "Air Conditioning", "TV", "Room Service", "Daily Housekeeping", "Ironing Service"],
+  },
+  {
+    category: "Room Features",
+    icon: "🛏️",
+    items: ["Mini Bar", "Balcony", "Private Bathroom", "Shower", "Tea/Coffee Maker", "Socket Near the Bed", "Clothes Rack", "Electric Kettle"],
+  },
+  {
+    category: "Views & Outdoors",
+    icon: "🌿",
+    items: ["Sea View", "Garden View", "Outdoor Furniture", "Garden", "Parking", "Free Parking"],
+  },
+  {
+    category: "Family & Entertainment",
+    icon: "👨‍👩‍👧",
+    items: ["Family Rooms", "Board Games / Puzzles", "Breakfast Included", "Washing Machine", "Kitchen"],
+  },
+  {
+    category: "Activities & Tours",
+    icon: "🚴",
+    items: ["Bicycle Rental", "Cooking Class", "Walking Tours", "Bike Tours", "Tour Desk", "Happy Hour", "Local Culture Class"],
+  },
+  {
+    category: "Laundry",
+    icon: "👕",
+    items: ["Laundry Service", "Washing Machine"],
+  },
 ];
 
 const Icons = {
   upload: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>),
-  globe: () => (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>),
-  check: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>),
   xIcon: () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>),
   plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
   arrowLeft: () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>),
@@ -184,11 +214,6 @@ export default function AddRoom() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-  }
-  if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
-};
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
@@ -210,9 +235,10 @@ export default function AddRoom() {
     setImagePreviews(files.map(f => URL.createObjectURL(f)));
   };
 
-  
-  const handle360Upload = (e) => { const file = e.target.files[0]; if (file) setMedia360(file.name); };
-  const removeImage = (index) => { setImages(prev => prev.filter((_, i) => i !== index)); setImagePreviews(prev => prev.filter((_, i) => i !== index)); };
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
   const validate = () => {
     const e = {};
