@@ -536,6 +536,20 @@ export default function UpdateRoom() {
                     <Icons.save />{isLoading ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
+
+                </div>
+
+                {/* Form actions */}
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
+                  <button type="button" className="br" onClick={() => navigate("/admin/rooms")}
+                    style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="bs" disabled={isLoading}
+                    style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)", fontFamily: "inherit" }}>
+                    <Icons.save />{isLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
