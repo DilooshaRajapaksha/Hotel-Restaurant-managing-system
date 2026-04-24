@@ -180,3 +180,82 @@
   background: #f8d7da;
   color: #721c24;
 }
+
+.orders-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.section-title {
+  font-size: 1.55rem;
+  color: #d4af37;
+  margin-bottom: 0.4rem;
+}
+
+.section-subtitle {
+  color: #666;
+  margin-bottom: 1.4rem;
+  font-size: 0.98rem;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.order-card {
+  background: #f8f9fa;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  padding: 1.4rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-card:hover {
+  border-color: #d4af37;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(212, 175, 85, 0.12);
+}
+
+.order-icon {
+  font-size: 2.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.order-card h3 {
+  margin: 0.4rem 0 0.6rem;
+  color: #111;
+  font-size: 1.1rem;
+}
+
+.order-card p {
+  color: #666;
+  font-size: 0.92rem;
+  margin-bottom: 1rem;
+}
+
+.order-btn {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  background: #ddd;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.order-btn.primary {
+  background: #d4af37;
+  color: #111;
+}
+
+.order-btn:hover {
+  background: #b8972e;
+  color: #111;
+}
