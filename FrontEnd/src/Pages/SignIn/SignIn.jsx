@@ -4,7 +4,7 @@ import axios from 'axios';
 import Logo from '../../assets/Pictures/SignInLogo.png';
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../Context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 
 const SignIn = () => {
@@ -44,7 +44,6 @@ const SignIn = () => {
         return '/admin';
       case 'CUSTOMER':
         return '/';
-      case 'DELIVERY':
       case 'DELIVERY_STAFF':
         return '/delivery';
       default:
@@ -67,12 +66,31 @@ const SignIn = () => {
     };
   };
 
+  
+  const storeTokenByRole = (role, token) => {
+    const normalizedRole = role?.toUpperCase();
+    
+    // Clear all tokens first to prevent conflicts
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('deliveryToken');
+    
+    // Store in the correct token key
+    if (normalizedRole === 'ADMIN') {
+      localStorage.setItem('adminToken', token);
+    } else if (normalizedRole === 'DELIVERY_STAFF') {
+      localStorage.setItem('deliveryToken', token);
+    } else {
+      localStorage.setItem('customerToken', token);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post('http://localhost:8081/api/auth/login', {
         email: form.email,
         password: form.password,
       });
@@ -80,11 +98,8 @@ const SignIn = () => {
       const user = mapUserFromAuth(data);
       login(user);
 
-      if (user.role?.toUpperCase() === 'ADMIN') {
-        localStorage.setItem('adminToken', data.token);
-      } else {
-        localStorage.setItem('customerToken', data.token);
-      }
+      
+      storeTokenByRole(user.role, data.token);
 
       navigate(getDashboardPath(user.role));
     } catch (err) {
@@ -96,18 +111,15 @@ const SignIn = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/google-login', {
+      const response = await axios.post('http://localhost:8081/api/auth/google-login', {
         idToken: credentialResponse.credential
       });
       const data = response.data;
       const user = mapUserFromAuth(data);
       login(user);
 
-      if (user.role?.toUpperCase() === 'ADMIN') {
-        localStorage.setItem('adminToken', data.token);
-      } else {
-        localStorage.setItem('customerToken', data.token);
-      }
+      
+      storeTokenByRole(user.role, data.token);
 
       navigate(getDashboardPath(user.role));
     } catch (err) {
@@ -123,7 +135,7 @@ const SignIn = () => {
 
     window.FB.login((response) => {
       if (response.authResponse) {
-        axios.post('http://localhost:8080/api/auth/facebook-login', {
+        axios.post('http://localhost:8081/api/auth/facebook-login', {
           accessToken: response.authResponse.accessToken
         })
         .then(res => {
@@ -131,11 +143,8 @@ const SignIn = () => {
           const user = mapUserFromAuth(data);
           login(user);
 
-          if (user.role?.toUpperCase() === 'ADMIN') {
-            localStorage.setItem('adminToken', data.token);
-          } else {
-            localStorage.setItem('customerToken', data.token);
-          }
+        
+          storeTokenByRole(user.role, data.token);
 
           navigate(getDashboardPath(user.role));
         })

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   xIcon: () => (
@@ -79,7 +80,7 @@ export default function UpdateCategory() {
       setIsFetching(true);
       setFetchError(null);
 
-      const res = await api.get(`http://localhost:8080/api/admin/menu-categories/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/menu-categories/${id}`);
       const category = res.data;
 
       setForm({
@@ -137,7 +138,7 @@ export default function UpdateCategory() {
     setIsLoading(true);
 
     try {
-      await api.put(`http://localhost:8080/api/admin/menu-categories/${id}`, {
+        await api.put(`http://localhost:8081/api/admin/menu-categories/${id}`, {
         category_name: form.category_name.trim(),
         description: form.description.trim(),
         is_active: form.is_active,
@@ -268,28 +269,7 @@ export default function UpdateCategory() {
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
-          <div
-            style={{
-              background: "#fff",
-              borderBottom: "1px solid #E5E7EB",
-              padding: "0 32px",
-              height: 64,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#9CA3AF" }}>Menu Management</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Update Category</span>
-            </div>
-          </div>
+          <AdminTopBar pageTitle="Edit Category" />
 
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 24 }}>

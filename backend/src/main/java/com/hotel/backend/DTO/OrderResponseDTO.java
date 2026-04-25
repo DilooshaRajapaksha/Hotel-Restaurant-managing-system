@@ -22,10 +22,14 @@ public class OrderResponseDTO {
     private String customer_phone;
 
     private Long address_id;
+    private String house_no;
     private String street;
+    private String area;
     private String city;
-    private String district;
-    private String postal_code;
+    private String notes;
+    private String formatted_address;
+    private Double latitude;
+    private Double longitude;
 
     private String payment_method;
     private String payment_status;

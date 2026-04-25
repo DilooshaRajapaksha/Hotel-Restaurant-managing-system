@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   upload: () => (
@@ -60,7 +61,7 @@ export default function AddFood() {
 
   const fetchCategories = async () => {
     try {
-      const res = await api.get("http://localhost:8080/api/admin/menu-categories");
+      const res = await api.get("http://localhost:8081/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch (e) {
       console.error("Failed to load categories:", e);
@@ -151,7 +152,7 @@ export default function AddFood() {
 
       images.forEach((img) => formData.append("images", img));
 
-      await api.post("http://localhost:8080/api/admin/menu-items", formData, {
+      await api.post("http://localhost:8081/api/admin/menu-items", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -220,15 +221,7 @@ export default function AddFood() {
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif", overflow: "hidden" }}>
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, width: "100%", overflow: "auto" }}>
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#9CA3AF" }}>Menu Management</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Add New Food</span>
-            </div>
-          </div>
+          <AdminTopBar pageTitle="Add Food" />
 
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 24 }}>

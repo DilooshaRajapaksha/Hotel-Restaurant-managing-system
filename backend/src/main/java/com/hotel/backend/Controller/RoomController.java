@@ -1,35 +1,6 @@
 package com.hotel.backend.Controller;
 
-import com.hotel.backend.DTO.RoomResponse;
-import com.hotel.backend.Service.RoomService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@CrossOrigin(origins = "*")
-@RestController
-@RequestMapping("/api")
-public class RoomController {
-
-    private final RoomService roomService;
-
-    public RoomController(RoomService roomService) {
-        this.roomService = roomService;
-    }
-
-    @GetMapping("/rooms")
-    public List<RoomResponse> getAllRooms() {
-        return roomService.getAllRooms();
-    }
-
-    @GetMapping("/rooms/{id}")
-    public ResponseEntity<RoomResponse> getRoom(@PathVariable Long id) {
-        RoomResponse room = roomService.getRoomById(id);
-        if (room == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(room);
+import com.hotel.backend.Entity.HotelImage;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.RoomType;
 import com.hotel.backend.Service.RoomService;
@@ -51,7 +22,6 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
 
-    // GET all room types
     @GetMapping("/types")
     public ResponseEntity<List<RoomType>> getAllRoomTypes() {
         return ResponseEntity.ok(roomService.getAllRoomTypes());
@@ -93,11 +63,13 @@ public class RoomController {
             @RequestParam String roomTypeName,
             @RequestParam BigDecimal roomPrice,
             @RequestParam(required = false, defaultValue = "AVAILABLE") String roomStatus,
-            @RequestParam(required = false) List<MultipartFile> images
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile panorama
     ) throws IOException {
         try {
             Room.RoomStatus status = parseStatus(roomStatus);
-            Room saved = roomService.addRoom(roomName, roomTypeName, roomPrice, status, images);
+            Room saved = roomService.addRoom(roomName, roomTypeName, roomPrice, status, description, images, panorama);
             return ResponseEntity.ok(saved);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -111,11 +83,13 @@ public class RoomController {
             @RequestParam(required = false) String roomTypeName,
             @RequestParam(required = false) BigDecimal roomPrice,
             @RequestParam(required = false) String roomStatus,
-            @RequestParam(required = false) List<MultipartFile> images
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile panorama
     ) throws IOException {
         try {
             Room.RoomStatus status = roomStatus != null ? parseStatus(roomStatus) : null;
-            Room updated = roomService.updateRoom(id, roomName, roomTypeName, roomPrice, status, images);
+            Room updated = roomService.updateRoom(id, roomName, roomTypeName, roomPrice, status, description, images, panorama);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -140,8 +114,12 @@ public class RoomController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteRoom(@PathVariable Long id) {
-        roomService.deleteRoom(id);
-        return ResponseEntity.ok("Room deleted successfully");
+        try {
+            roomService.deleteRoom(id);
+            return ResponseEntity.ok("Room deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/images/{imageId}")

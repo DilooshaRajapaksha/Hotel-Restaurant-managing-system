@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const adminToken = localStorage.getItem('adminToken');
     const customerToken = localStorage.getItem('customerToken');
+    const deliveryToken = localStorage.getItem('deliveryToken'); // ✅ ADDED
     const savedUser = localStorage.getItem('user');
 
     if (savedUser) {
@@ -18,12 +19,17 @@ export const AuthProvider = ({ children }) => {
       setUser(parsedUser);
 
       const currentPath = location.pathname;
+      const normalizedRole = parsedUser.role?.toUpperCase();
 
-      if (adminToken && parsedUser.role?.toUpperCase() === 'ADMIN') {
+      if (adminToken && normalizedRole === 'ADMIN') {
         if (!currentPath.startsWith('/admin')) {
           navigate('/admin', { replace: true });
         }
-      } else if (customerToken && parsedUser.role?.toUpperCase() === 'CUSTOMER') {
+      } else if (deliveryToken && normalizedRole === 'DELIVERY_STAFF') {
+        if (!currentPath.startsWith('/delivery')) {
+          navigate('/delivery', { replace: true });
+        }
+      } else if (customerToken && normalizedRole === 'CUSTOMER') {
         if (currentPath.includes('login') || currentPath.includes('signin')) {
           navigate('/', { replace: true });
         }
@@ -48,6 +54,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('adminToken');
     localStorage.removeItem('customerToken');
+    localStorage.removeItem('deliveryToken'); 
     localStorage.removeItem('user');
     navigate('/signin');
   };

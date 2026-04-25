@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   search: () => (
@@ -63,7 +64,7 @@ export default function OrderList() {
       setLoading(true);
       setPageError(null);
 
-      const res = await api.get("http://localhost:8080/api/admin/orders");
+      const res = await api.get("http://localhost:8081/api/admin/orders");
       const data = res.data || [];
 
       setOrders(data);
@@ -91,7 +92,7 @@ export default function OrderList() {
   const handleSaveStatus = async (orderId) => {
     try {
       setSavingId(orderId);
-      await api.put(`http://localhost:8080/api/admin/orders/${orderId}/status`, {
+      await api.put(`http://localhost:8081/api/admin/orders/${orderId}/status`, {
         order_status: statusDrafts[orderId],
       });
 
@@ -116,7 +117,7 @@ export default function OrderList() {
 
     try {
       setSavingId(orderId);
-      await api.put(`http://localhost:8080/api/admin/orders/${orderId}/cancel`);
+      await api.put(`http://localhost:8081/api/admin/orders/${orderId}/cancel`);
 
       setOrders((prev) =>
         prev.map((o) =>
@@ -184,32 +185,34 @@ export default function OrderList() {
         .action-btn:hover {
           transform: translateY(-1px);
         }
+      
+        /* ── Mobile: no horizontal scroll ── */
+        @media (max-width: 768px) {
+          .admin-page-root { overflow-x: hidden !important; }
+          .admin-content-area { padding: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-area { padding: 12px !important; }
+        }
+      
+        @media (max-width: 768px) {
+          .admin-content-wrap { padding: 16px 14px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-wrap { padding: 12px 10px !important; }
+        }
+      
+        .pg-stat-grid { display: grid; gap: 14px; }
+        @media (max-width: 900px) { .pg-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; } }
+        @media (max-width: 400px) { .pg-stat-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; } }
       `}</style>
 
-      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", overflowX: "hidden", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Orders</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>🔔</button>
-              <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
-                  <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: "32px", flex: 1 }}>
+          <AdminTopBar pageTitle="Orders" />
+          <div className="admin-content-wrap" style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 28 }}>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Order Management</h1>
               <p style={{ fontSize: 14, color: "#6B7280" }}>
@@ -217,7 +220,7 @@ export default function OrderList() {
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
+            <div className="pg-stat-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
                 { label: "Total Orders", value: stats.total, color: "#C9A84C" },
                 { label: "Preparing", value: stats.preparing, color: "#8B5CF6" },
@@ -288,7 +291,7 @@ export default function OrderList() {
                   No orders found.
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div style={{ width:"100%", overflowX:"auto", WebkitOverflowScrolling:"touch" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
                   <thead>
                     <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
                       {["Order ID", "Customer", "Date", "Total", "Status", "Change Status", "Action"].map((h) => (
@@ -399,7 +402,7 @@ export default function OrderList() {
                       );
                     })}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           </div>

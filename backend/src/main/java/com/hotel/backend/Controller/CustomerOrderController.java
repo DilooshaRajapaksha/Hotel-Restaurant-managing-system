@@ -1,6 +1,7 @@
 package com.hotel.backend.Controller;
 
 import com.hotel.backend.DTO.OrderResponseDTO;
+import com.hotel.backend.DTO.PlaceOrderRequestDTO;
 import com.hotel.backend.Service.OrderService;
 import com.hotel.backend.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/customer/orders")
@@ -27,7 +27,12 @@ public class CustomerOrderController {
         return userService.getUserByEmail(email).getUserId();
     }
 
-    // GET /api/customer/orders/my
+    @PostMapping
+    public ResponseEntity<OrderResponseDTO> placeOrder(@RequestBody PlaceOrderRequestDTO request) {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(orderService.placeOrder(userId, request));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<List<OrderResponseDTO>> getMyOrders() {
         Long userId = getCurrentUserId();
@@ -35,7 +40,6 @@ public class CustomerOrderController {
         return ResponseEntity.ok(myOrders);
     }
 
-    // GET /api/customer/orders/{id}
     @GetMapping("/{id}")
     public ResponseEntity<?> getMyOrder(@PathVariable Long id) {
         Long userId = getCurrentUserId();
@@ -47,7 +51,6 @@ public class CustomerOrderController {
         return ResponseEntity.ok(order);
     }
 
-    // (Optional) Cancel my own order
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelMyOrder(@PathVariable Long id) {
         Long userId = getCurrentUserId();

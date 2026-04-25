@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   xIcon: () => (
@@ -105,7 +106,7 @@ export default function UpdateFood() {
 
   const fetchCategories = async () => {
     try {
-      const res = await api.get("http://localhost:8080/api/admin/menu-categories");
+      const res = await api.get("http://localhost:8081/api/admin/menu-categories");
       setCategories(res.data || []);
     } catch (e) {
       console.error("Failed to load categories:", e);
@@ -116,7 +117,7 @@ export default function UpdateFood() {
     try {
       setIsFetching(true);
 
-      const res = await api.get(`http://localhost:8080/api/admin/menu-items/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/menu-items/${id}`);
       const item = res.data;
 
       setForm({
@@ -130,7 +131,7 @@ export default function UpdateFood() {
         is_available: !!item.is_available,
       });
 
-      const imgRes = await api.get(`http://localhost:8080/api/admin/menu-items/${id}/images`);
+      const imgRes = await api.get(`http://localhost:8081/api/admin/menu-items/${id}/images`);
       setExistingImages(imgRes.data || []);
     } catch (err) {
       console.error(err);
@@ -178,7 +179,7 @@ export default function UpdateFood() {
 
   const removeExistingImage = async (imageId) => {
     try {
-      await api.delete(`http://localhost:8080/api/admin/menu-images/${imageId}`);
+      await api.delete(`http://localhost:8081/api/admin/menu-images/${imageId}`);
       setExistingImages((prev) => prev.filter((img) => (img.Fimage_id ?? img.fimage_id) !== imageId));
     } catch (err) {
       console.error("Failed to delete image:", err);
@@ -237,7 +238,7 @@ export default function UpdateFood() {
       // new images
       images.forEach((img) => formData.append("images", img));
 
-      await api.put(`http://localhost:8080/api/admin/menu-items/${id}`, formData, {
+      await api.put(`http://localhost:8081/api/admin/menu-items/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -324,6 +325,7 @@ export default function UpdateFood() {
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
+          <AdminTopBar pageTitle="Edit Food" />
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 24 }}>
               <button className="bk" onClick={() => navigate("/admin/menu")} style={{ marginBottom: 12 }}>

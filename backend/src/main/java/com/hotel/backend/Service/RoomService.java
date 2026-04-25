@@ -1,17 +1,11 @@
 package com.hotel.backend.Service;
 
-import com.hotel.backend.DTO.RoomResponse;
+import com.hotel.backend.Entity.Booking;
+import com.hotel.backend.Entity.BookingStatus;
 import com.hotel.backend.Entity.HotelImage;
 import com.hotel.backend.Entity.Room;
-import com.hotel.backend.Repo.HotelImageRepo;
-import com.hotel.backend.Repo.RoomRepo;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.RoomType;
+import com.hotel.backend.Repo.BookingRepo;
 import com.hotel.backend.Repo.HotelImageRepo;
 import com.hotel.backend.Repo.RoomRepo;
 import com.hotel.backend.Repo.RoomTypeRepo;
@@ -24,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,44 +26,10 @@ import java.util.UUID;
 @Service
 public class RoomService {
 
-    private final RoomRepo roomRepository;
-    private final HotelImageRepo hotelImageRepo;
-
-    public RoomService(RoomRepo roomRepository, HotelImageRepo hotelImageRepo) {
-        this.roomRepository = roomRepository;
-        this.hotelImageRepo = hotelImageRepo;
-    }
-
-    public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    public RoomResponse getRoomById(Long id) {
-        return roomRepository.findById(id)
-                .map(this::mapToResponse)
-                .orElse(null);
-    }
-
-    private RoomResponse mapToResponse(Room r) {
-        String imageUrl = hotelImageRepo.findMainImageByRoomId(r.getRoomId())
-                .map(HotelImage::getRimageUrl)
-                .orElse("https://images.unsplash.com/photo-1611892440504-42a79208a498?w=800");
-
-        return new RoomResponse(
-                r.getRoomId(),
-                r.getRoomName(),
-                r.getRoomPrice(),
-                r.getRoomStatus().name(),
-                imageUrl,
-                r.getRoomType().getCapacity(),
-                r.getRoomType().getRoomDescription()
-        );
-    }
-}
-    @Autowired
-    private RoomRepo roomRepository;
+    @Autowired private RoomRepo       roomRepo;
+    @Autowired private RoomTypeRepo   roomTypeRepo;
+    @Autowired private HotelImageRepo hotelImageRepo;
+    @Autowired private BookingRepo    bookingRepo;
 
     private final String UPLOAD_DIR = "uploads/rooms/";
 
@@ -86,7 +47,6 @@ public class RoomService {
         return roomTypeRepo.save(rt);
     }
 
-
     public List<Room> getAllRooms() {
         return roomRepo.findAll();
     }
@@ -95,22 +55,14 @@ public class RoomService {
         return roomRepo.findById(id);
     }
 
-    public Room addRoom(String roomName,
-                        String roomTypeName,
-                        BigDecimal roomPrice,
-                        Room.RoomStatus roomStatus,
-                        List<MultipartFile> images) throws IOException {
-
-        RoomType roomType = roomTypeRepo.findFirstByRoomTypeName(roomTypeName)
-                .orElseThrow(() -> new RuntimeException(
-                        "Room type not found: '" + roomTypeName + "'"));
-
+    public Room addRoom(String roomName, String roomTypeName, BigDecimal roomPrice, Room.RoomStatus roomStatus, String description, List<MultipartFile> images, MultipartFile panorama) throws IOException {
+        RoomType roomType = roomTypeRepo.findFirstByRoomTypeName(roomTypeName).orElseThrow(() -> new RuntimeException("Room type not found: '" + roomTypeName + "'"));
         Room room = new Room();
         room.setRoomName(roomName);
         room.setRoomType(roomType);
         room.setRoomPrice(roomPrice);
         room.setRoomStatus(roomStatus != null ? roomStatus : Room.RoomStatus.AVAILABLE);
-
+        if (description != null && !description.isBlank()) room.setDescription(description);
         Room saved = roomRepo.save(room);
 
         if (images != null && !images.isEmpty()) {
@@ -122,34 +74,36 @@ public class RoomService {
                 hi.setRoomId(saved.getRoomId());
                 hi.setRimageUrl("/uploads/rooms/" + fileName);
                 hi.setIsMain(first);
+                hi.setIs360(false);
+                hi.setUploadedAt(LocalDateTime.now());
                 hotelImageRepo.save(hi);
                 first = false;
             }
         }
+
+        if (panorama != null && !panorama.isEmpty()) {
+            String fileName = saveFile(panorama);
+            HotelImage hi = new HotelImage();
+            hi.setRoomId(saved.getRoomId());
+            hi.setRimageUrl("/uploads/rooms/" + fileName);
+            hi.setIsMain(false);
+            hi.setIs360(true);
+            hi.setUploadedAt(LocalDateTime.now());
+            hotelImageRepo.save(hi);
+        }
         return saved;
     }
 
-    public Room updateRoom(Long id,
-                           String roomName,
-                           String roomTypeName,
-                           BigDecimal roomPrice,
-                           Room.RoomStatus roomStatus,
-                           List<MultipartFile> images) throws IOException {
-
-        Room room = roomRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
-
-        if (roomName   != null && !roomName.isBlank()) room.setRoomName(roomName);
-        if (roomPrice  != null) room.setRoomPrice(roomPrice);
+    public Room updateRoom(Long id, String roomName, String roomTypeName, BigDecimal roomPrice, Room.RoomStatus roomStatus, String description, List<MultipartFile> images, MultipartFile panorama) throws IOException {
+        Room room = roomRepo.findById(id).orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        if (roomName != null && !roomName.isBlank()) room.setRoomName(roomName);
+        if (roomPrice != null) room.setRoomPrice(roomPrice);
         if (roomStatus != null) room.setRoomStatus(roomStatus);
-
+        if (description != null && !description.isBlank()) room.setDescription(description);
         if (roomTypeName != null && !roomTypeName.isBlank()) {
-            RoomType rt = roomTypeRepo.findFirstByRoomTypeName(roomTypeName)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Room type not found: '" + roomTypeName + "'"));
+            RoomType rt = roomTypeRepo.findFirstByRoomTypeName(roomTypeName).orElseThrow(() -> new RuntimeException("Room type not found: '" + roomTypeName + "'"));
             room.setRoomType(rt);
         }
-
         Room saved = roomRepo.save(room);
 
         if (images != null && !images.isEmpty()) {
@@ -160,21 +114,36 @@ public class RoomService {
                 hi.setRoomId(saved.getRoomId());
                 hi.setRimageUrl("/uploads/rooms/" + fileName);
                 hi.setIsMain(false);
+                hi.setIs360(false);
+                hi.setUploadedAt(LocalDateTime.now());
                 hotelImageRepo.save(hi);
             }
+        }
+
+        if (panorama != null && !panorama.isEmpty()) {
+            String fileName = saveFile(panorama);
+            HotelImage hi = new HotelImage();
+            hi.setRoomId(saved.getRoomId());
+            hi.setRimageUrl("/uploads/rooms/" + fileName);
+            hi.setIsMain(false);
+            hi.setIs360(true);
+            hi.setUploadedAt(LocalDateTime.now());
+            hotelImageRepo.save(hi);
         }
         return saved;
     }
 
     public Room updateRoomStatus(Long id, Room.RoomStatus newStatus) {
-        Room room = roomRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        Room room = roomRepo.findById(id).orElseThrow(() -> new RuntimeException("Room not found: " + id));
         room.setRoomStatus(newStatus);
         return roomRepo.save(room);
     }
 
     @Transactional
     public void deleteRoom(Long id) {
+        roomRepo.findById(id).orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        boolean hasActive = bookingRepo.hasActiveBookings(id, BookingStatus.PENDING, BookingStatus.CONFIRMED);
+        if (hasActive) throw new RuntimeException("Cannot delete this room. It has active bookings (PENDING or CONFIRMED). Please cancel all bookings first.");
         roomRepo.deleteById(id);
     }
 

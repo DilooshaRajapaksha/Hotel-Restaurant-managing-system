@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
 import api from "../../../utils/axiosInstance";
 
@@ -65,7 +66,7 @@ export default function OrderDetails() {
       setLoading(true);
       setPageError(null);
 
-      const res = await api.get(`http://localhost:8080/api/admin/orders/${id}`);
+      const res = await api.get(`http://localhost:8081/api/admin/orders/${id}`);
       setOrder(res.data || null);
       setDraftStatus(res.data?.order_status || "PENDING");
     } catch (err) {
@@ -79,7 +80,7 @@ export default function OrderDetails() {
   const handleSaveStatus = async () => {
     try {
       setSaving(true);
-      await api.put(`http://localhost:8080/api/admin/orders/${id}/status`, {
+      await api.put(`http://localhost:8081/api/admin/orders/${id}/status`, {
         order_status: draftStatus,
       });
 
@@ -101,7 +102,7 @@ export default function OrderDetails() {
 
     try {
       setSaving(true);
-      await api.put(`http://localhost:8080/api/admin/orders/${id}/cancel`);
+      await api.put(`http://localhost:8081/api/admin/orders/${id}/cancel`);
 
       setOrder((prev) => ({
         ...prev,
@@ -163,29 +164,29 @@ export default function OrderDetails() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
+        .fi:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
+        .fi { transition: border-color 0.18s, background 0.18s, box-shadow 0.18s; }
+        .uz:hover { border-color: #C9A84C !important; background: #FFFBEB !important; }
+        .br:hover { background: #F3F4F6 !important; border-color: #C9A84C !important; }
+        .bs:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,168,76,0.4) !important; }
+        .bs { transition: all 0.18s; } .bs:disabled { opacity: 0.7; cursor: not-allowed; }
+        .bk { color:#6B7280; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:color 0.15s; background:none; border:none; font-family:inherit; padding:0; }
+        .bk:hover { color: #C9A84C; }
+        input[type="file"] { display: none; } ::placeholder { color: #C4C9D4; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+        .toast { animation: slideUp 0.3s ease; }
       `}</style>
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#9CA3AF" }}>Orders</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Order #{order.order_id}</span>
-            </div>
-          </div>
+          <AdminTopBar pageTitle="Order Details" />
 
           <div style={{ padding: "32px", flex: 1 }}>
-            <button
-              onClick={() => navigate("/admin/orders")}
-              style={{ color: "#6B7280", fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", background: "none", border: "none", marginBottom: 14 }}
-            >
-              <Icons.arrowLeft /> Back to Orders
-            </button>
+            <button className="bk" onClick={() => navigate("/admin/orders")} style={{ marginBottom: 12 }}>
+                <Icons.arrowLeft /> Back to Orders
+              </button>
 
             <div style={{ marginBottom: 24 }}>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Order Details</h1>
