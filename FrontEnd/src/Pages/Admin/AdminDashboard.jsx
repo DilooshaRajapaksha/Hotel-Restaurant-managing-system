@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminTopBar from "../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import api from "../../utils/axiosInstance";
+import api from "../../Utils/axiosInstance";
 
 const BASE_URL = "http://localhost:8080";
 const MONTHS   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
