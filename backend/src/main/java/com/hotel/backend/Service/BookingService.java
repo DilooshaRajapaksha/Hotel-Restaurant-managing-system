@@ -3,6 +3,7 @@ package com.hotel.backend.Service;
 import com.hotel.backend.DTO.BookingRequestDTO;
 import com.hotel.backend.DTO.NotificationPayloadDTO;
 import com.hotel.backend.Entity.Booking;
+import com.hotel.backend.Entity.BookingStatus;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.Role;
 import com.hotel.backend.Entity.User;
@@ -28,13 +29,14 @@ public class BookingService {
     @Autowired private RoomRepo    roomRepo;
     @Autowired private UserRepo    userRepo;
     @Autowired private RoleRepo    roleRepo;
-    @Autowired private SimpMessagingTemplate messagingTemplate;   // Message
+    @Autowired private SimpMessagingTemplate messagingTemplate;
 
-    public List<Booking> getAllBookings()                           { return bookingRepo.findAll(); }
-    public Optional<Booking> getBookingById(Long id)               { return bookingRepo.findById(id); }
-    public List<Booking> getBookingsByStatus(Booking.BookingStatus s) { return bookingRepo.findByBookingStatus(s); }
-    public List<Booking> getBookingsByUserId(Long userId)          { return bookingRepo.findByUserId(userId); }
-    public List<Booking> searchBookings(String keyword)            { return bookingRepo.searchBookings(keyword); }
+    public List<Booking> getAllBookings()                              { return bookingRepo.findAll(); }
+    public Optional<Booking> getBookingById(Long id)                  { return bookingRepo.findById(id); }
+    // FIX: parameter type is standalone BookingStatus, not Booking.BookingStatus
+    public List<Booking> getBookingsByStatus(BookingStatus s)         { return bookingRepo.findByBookingStatus(s); }
+    public List<Booking> getBookingsByUserId(Long userId)             { return bookingRepo.findByUserId(userId); }
+    public List<Booking> searchBookings(String keyword)               { return bookingRepo.searchBookings(keyword); }
 
     public Booking createBookingForCustomer(Long userId, Long roomId,
                                             LocalDate checkInDate, LocalDate checkOutDate,
@@ -54,9 +56,10 @@ public class BookingService {
         if (checkInDate.isBefore(LocalDate.now()))
             throw new RuntimeException("Check-in date cannot be in the past.");
 
+        // FIX: use standalone BookingStatus enum
         List<Booking> overlapping = bookingRepo.findOverlappingBookings(
                 roomId, checkInDate, checkOutDate,
-                Booking.BookingStatus.PENDING, Booking.BookingStatus.CONFIRMED);
+                BookingStatus.PENDING, BookingStatus.CONFIRMED);
         if (!overlapping.isEmpty()) {
             Booking c = overlapping.get(0);
             throw new RuntimeException(
@@ -75,7 +78,7 @@ public class BookingService {
         booking.setNumberOfGuest(numberOfGuest);
         booking.setSpecialRequest(specialRequest);
         booking.setTotalPrice(totalPrice);
-        booking.setBookingStatus(Booking.BookingStatus.PENDING);
+        booking.setBookingStatus(BookingStatus.PENDING);
 
         Booking saved;
         try {
@@ -84,7 +87,6 @@ public class BookingService {
             throw new RuntimeException("User with id " + userId + " does not exist.");
         }
 
-        // Push WebSocket notification to admin
         User user = userRepo.findById(userId).orElse(null);
         String customerName = user != null
                 ? user.getFirstName() + " " + user.getLastName()
@@ -102,7 +104,7 @@ public class BookingService {
         return saved;
     }
 
-    public Booking updateBookingStatus(Long id, Booking.BookingStatus newStatus) {
+    public Booking updateBookingStatus(Long id, BookingStatus newStatus) {
         Booking booking = bookingRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
         booking.setBookingStatus(newStatus);

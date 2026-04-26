@@ -3,6 +3,8 @@ import './RoomsPage.css';
 import logo from '../../Assets/Pics/Logo.jpg';
 import RoomCard from '../../Components/RoomCard/RoomCard';
 import Carousel from '../../Components/Carousel/Carousel';
+import Navbar from '../../Components/NavBar/NavBar';
+import Footer from '../../Components/Footer';
 import Room1 from '../../Assets/Pics/Room1.jpg';
 import Room2 from '../../Assets/Pics/Room2.jpg';
 import Room3 from '../../Assets/Pics/Room3.jpg';
@@ -42,9 +44,9 @@ const RoomsPage = () => {
     if (!sortOption) return rooms;
 
     return [...rooms].sort((a, b) => {
-      if (sortOption === 'price') return a.price - b.price;
-      if (sortOption === 'capacity') return a.capacity - b.capacity;
-      if (sortOption === 'az') return a.name.localeCompare(b.name);
+      if (sortOption === 'price') return (a.roomPrice || a.price || 0) - (b.roomPrice || b.price || 0);
+      if (sortOption === 'capacity') return (a.roomType?.capacity || a.capacity || 0) - (b.roomType?.capacity || b.capacity || 0);
+      if (sortOption === 'az') return (a.roomName || a.name || "").localeCompare(b.roomName || b.name || "");
       return 0;
     });
   };
@@ -53,25 +55,13 @@ const RoomsPage = () => {
 
   return (
     <div className="rooms-page">
-
-      {/* Header */}
-      <header className="header">
-        <div className="logo">
-          <img src={logo} alt="GoldenStars Hotel" />
-          <h1>GoldenStars Hotel</h1>
-        </div>
-      </header>
-
+      <Navbar/>
       <main>
-
-        {/* Carousel */}
         <section className="hero-carousel">
           <Carousel images={carouselImages} />
         </section>
 
-        {/* Rooms */}
         <section className="rooms-section">
-
           <div className="rooms-top-bar">
             <h2>Our Luxury Rooms</h2>
 
@@ -98,12 +88,12 @@ const RoomsPage = () => {
 
           <div className="rooms-grid">
             {sortedRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <RoomCard key={room.roomId || room.id} room={room} />
             ))}
           </div>
         </section>
-
       </main>
+      <Footer />
     </div>
   );
 };

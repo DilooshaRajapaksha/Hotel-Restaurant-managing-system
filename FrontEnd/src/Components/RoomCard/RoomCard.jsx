@@ -1,60 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RoomCard.css';
 
-const BASE_URL = "http://localhost:8081";
-
 const RoomCard = ({ room }) => {
   const navigate = useNavigate();
+  const [imageUrl, setImageUrl] = useState("https://picsum.photos/id/1015/600/400");
 
-  const roomId = room.id;
-  const roomName = room.name || `Room ${roomId}`;
-  const imageUrlRaw = room.imageUrl || '/images/no-image.jpg';
-  const imageUrl =
-    typeof imageUrlRaw === "string" && !imageUrlRaw.startsWith("http")
-      ? `${BASE_URL}${imageUrlRaw}`
-      : imageUrlRaw;
-  const price = room.price || 0;
+  useEffect(() => {
+    if (!room || !room.roomId) return;
+    fetch(`http://localhost:8081/api/public/rooms/${room.roomId}/images`)
+      .then(res => res.json())
+      .then(images => {
+        if (images && images.length > 0) {
+          const main = images.find(img => img.isMain) || images[0];
+          const url = main.rimageUrl?.startsWith("http") 
+            ? main.rimageUrl 
+            : `http://localhost:8081${main.rimageUrl}`;
+          setImageUrl(url);
+        }
+      })
+      .catch(() => {});
+  }, [room]);
 
-  const handleViewMore = () => {
-    if (roomId) {
-      navigate(`/rooms/${roomId}`);
-    }
-  };
+  if (!room) return null;
+
+  const price = room.roomPrice || 0;
+  const name = room.roomName || "Room";
+  const capacity = room.roomType?.capacity || 0;
+  const typeName = room.roomType?.roomTypeName || "Standard Room";
 
   return (
-    <div className="room-card">
-      
-      {/* Image Section */}
+    <div className="room-card" onClick={() => navigate(`/rooms/${room.roomId}`)}>
       <div className="room-image-wrapper">
-        <img
-          src={imageUrl}
-          alt={roomName}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/images/no-image.jpg';
-          }}
+        <img 
+          src={imageUrl} 
+          alt={name}
+          onError={(e) => { e.target.src = 'https://picsum.photos/id/1015/600/400'; }}
         />
-
-        {/* Gold overlay effect */}
         <div className="overlay"></div>
-
-        {/* Price badge */}
         <div className="price-badge">
           Rs. {Number(price).toLocaleString()}
         </div>
       </div>
-
-      {/* Content */}
       <div className="room-content">
-        <h3>{roomName}</h3>
-
-        <button 
-          className="view-more-btn"
-          onClick={handleViewMore}
-        >
-          View Details
-        </button>
+        <h3>{name}</h3>
+        <div>{typeName}</div>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div>👥 {capacity} Guests</div>
+          <button className="view-more-btn">View Details</button>
+        </div>
       </div>
     </div>
   );

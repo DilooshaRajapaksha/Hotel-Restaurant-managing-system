@@ -18,6 +18,7 @@ public class MenuItemDTO {
     private BigDecimal full_price;
     private Integer preparation_time;
     private Boolean is_available;
+    private String image_url;
 
 }
 

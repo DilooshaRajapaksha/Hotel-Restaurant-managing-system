@@ -63,11 +63,13 @@ public class RoomController {
             @RequestParam String roomTypeName,
             @RequestParam BigDecimal roomPrice,
             @RequestParam(required = false, defaultValue = "AVAILABLE") String roomStatus,
-            @RequestParam(required = false) List<MultipartFile> images
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile panorama
     ) throws IOException {
         try {
             Room.RoomStatus status = parseStatus(roomStatus);
-            Room saved = roomService.addRoom(roomName, roomTypeName, roomPrice, status, images);
+            Room saved = roomService.addRoom(roomName, roomTypeName, roomPrice, status, description, images, panorama);
             return ResponseEntity.ok(saved);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -81,11 +83,13 @@ public class RoomController {
             @RequestParam(required = false) String roomTypeName,
             @RequestParam(required = false) BigDecimal roomPrice,
             @RequestParam(required = false) String roomStatus,
-            @RequestParam(required = false) List<MultipartFile> images
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) List<MultipartFile> images,
+            @RequestParam(required = false) MultipartFile panorama
     ) throws IOException {
         try {
             Room.RoomStatus status = roomStatus != null ? parseStatus(roomStatus) : null;
-            Room updated = roomService.updateRoom(id, roomName, roomTypeName, roomPrice, status, images);
+            Room updated = roomService.updateRoom(id, roomName, roomTypeName, roomPrice, status, description, images, panorama);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

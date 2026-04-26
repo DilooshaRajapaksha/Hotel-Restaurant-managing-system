@@ -26,11 +26,24 @@ const Icons = {
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
   ),
+    delivery: () => (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+    </svg>
+  ),
+  assign: () => (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>
+    </svg>
+  ),
+
   logout: () => (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
   ),
+
+  experiences: () => (<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>),
 };
 
 const NAV_ITEMS = [
@@ -39,6 +52,10 @@ const NAV_ITEMS = [
   { id: "orders",   label: "Orders",          path: "/admin/orders",     Icon: Icons.orders },
   { id: "bookings", label: "Bookings",        path: "/admin/bookings", Icon: Icons.bookings },
   { id: "reports",  label: "Reports",         path: "/admin/reports",  Icon: Icons.reports },
+  { id: "experiences",  label: "Experiences", path: "/admin/experiences",  Icon: Icons.experiences  },
+  { id: "delivery", label: "Delivery Staff",   path: "/admin/delivery/staff",  Icon: Icons.delivery },
+  { id: "assign",   label: "Assign Orders",    path: "/admin/delivery/orders", Icon: Icons.assign   },
+  
 ];
 
 export default function AdminSidebar() {

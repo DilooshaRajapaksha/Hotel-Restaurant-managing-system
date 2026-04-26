@@ -7,8 +7,6 @@ const BASE_URL = "http://localhost:8081";
 
 const GOLD  = "#C9A84C";
 const NAVY  = "#1B2A4A";
-
-// ── Add Staff Modal ────────────────────────────────────────────────────────
 function AddStaffModal({ onSave, onClose }) {
   const [form,   setForm]   = useState({ sName: "", email: "", contactNumber: "", passwardHash: "", roleId: 2 });
   const [saving, setSaving] = useState(false);
@@ -73,12 +71,10 @@ function AddStaffModal({ onSave, onClose }) {
     </div>
   );
 }
-
-// ── Main Page ──────────────────────────────────────────────────────────────
 export default function DeliveryStaffPage() {
   const navigate = useNavigate();
   const [staff,      setStaff]      = useState([]);
-  const [counts,     setCounts]     = useState({});   // { staffId: assignmentCount }
+  const [counts,     setCounts]     = useState({});   
   const [loading,    setLoading]    = useState(true);
   const [showModal,  setShowModal]  = useState(false);
   const [search,     setSearch]     = useState("");
@@ -96,7 +92,6 @@ export default function DeliveryStaffPage() {
       const res = await axios.get(`${BASE_URL}/api/delivery/staff`);
       const list = res.data || [];
       setStaff(list);
-      // Load assignment counts for each staff member
       const countMap = {};
       await Promise.all(list.map(async s => {
         try {
@@ -153,7 +148,6 @@ export default function DeliveryStaffPage() {
 
       {showModal && <AddStaffModal onSave={handleStaffAdded} onClose={() => setShowModal(false)} />}
 
-      {/* Delete confirm */}
       {deleteId && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#fff", borderRadius: 16, padding: 28, maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
@@ -175,7 +169,6 @@ export default function DeliveryStaffPage() {
         <DeliverySidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
-          {/* Topbar */}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Delivery Portal</span>
@@ -190,7 +183,6 @@ export default function DeliveryStaffPage() {
 
           <div style={{ padding: "28px 32px", flex: 1 }}>
 
-            {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Delivery Staff</h1>
@@ -202,7 +194,6 @@ export default function DeliveryStaffPage() {
               </button>
             </div>
 
-            {/* Stat cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
               {[
                 { label: "Total Staff", value: staff.length,    border: GOLD },
@@ -216,16 +207,13 @@ export default function DeliveryStaffPage() {
               ))}
             </div>
 
-            {/* Table card */}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
-              {/* Card header */}
               <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: GOLD }} />
                 <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>All Staff Members</span>
                 <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 10, marginLeft: 4 }}>{staff.length}</span>
 
-                {/* Search */}
                 <div style={{ marginLeft: "auto", position: "relative" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   <input style={{ paddingLeft: 32, paddingRight: 14, paddingTop: 7, paddingBottom: 7, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 220, color: "#111827", fontFamily: "inherit", outline: "none" }}
@@ -233,7 +221,6 @@ export default function DeliveryStaffPage() {
                 </div>
               </div>
 
-              {/* Table */}
               {loading ? (
                 <div style={{ padding: 56, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading staff...</div>
               ) : filtered.length === 0 ? (
@@ -263,7 +250,10 @@ export default function DeliveryStaffPage() {
                                 <div style={{ width: 34, height: 34, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD},#8B6914)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                                   {(s.sName || "?").charAt(0).toUpperCase()}
                                 </div>
-                                <span style={{ fontWeight: 600, color: "#111827" }}>{s.sName}</span>
+                                <span onClick={() => navigate(`/delivery/staff/${s.staffId}`)}
+                                  style={{ fontWeight: 600, color: "#111827", cursor: "pointer", textDecoration: "underline", textDecorationColor: GOLD }}>
+                                  {s.sName}
+                                </span>
                               </div>
                             </td>
                             <td style={{ padding: "14px 20px", color: "#6B7280" }}>{s.email}</td>
@@ -282,9 +272,9 @@ export default function DeliveryStaffPage() {
                             </td>
                             <td style={{ padding: "14px 20px", whiteSpace: "nowrap" }}>
                               <button className="assign-btn"
-                                onClick={() => navigate("/delivery/orders")}
+                                onClick={() => navigate(`/delivery/staff/${s.staffId}`)}
                                 style={{ fontSize: 12, padding: "5px 12px", borderRadius: 6, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", marginRight: 6, fontFamily: "inherit", fontWeight: 500, transition: "all 0.12s" }}>
-                                Assign Orders
+                                View Profile
                               </button>
                               <button className="del-btn"
                                 onClick={() => setDeleteId(s.staffId)}

@@ -30,6 +30,9 @@ public class Room {
     @Enumerated(EnumType.STRING)
     private RoomStatus roomStatus = RoomStatus.AVAILABLE;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     public enum RoomStatus {
         AVAILABLE, MAINTENANCE
     }
