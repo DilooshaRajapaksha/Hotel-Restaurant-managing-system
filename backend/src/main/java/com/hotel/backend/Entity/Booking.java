@@ -40,7 +40,6 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus = BookingStatus.PENDING;
 
-    // === FIXED: Missing relationships ===
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
@@ -48,8 +47,4 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", insertable = false, updatable = false)
     private Room room;
-
-    public enum BookingStatus {
-        PENDING, CONFIRMED, CANCELLED
-    }
 }

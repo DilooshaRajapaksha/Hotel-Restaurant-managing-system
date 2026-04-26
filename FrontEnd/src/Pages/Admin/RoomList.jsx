@@ -1,130 +1,137 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import api from "../../Utils/axiosInstance";
+import AdminTopBar from "../../Components/Admin/AdminTopBar";
+import api from "../../utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8081";
+const PER_PAGE = 6;
 
-
-const Icons = {
-  plus: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>),
-  edit: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
-  trash: () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>),
-  search: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
-  empty: () => (<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>),
-  warning: () => (<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>),
-  noImage: () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>),
-  chevron: () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>),
+const STATUS_CONFIG = {
+  PENDING:   { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Pending"   },
+  CONFIRMED: { bg: "#D1FAE5", color: "#065F46", dot: "#10B981", label: "Confirmed" },
+  CANCELLED: { bg: "#FEE2E2", color: "#991B1B", dot: "#EF4444", label: "Cancelled" },
 };
 
-const STATUS_COLORS = {
-  AVAILABLE:   { bg: "#D1FAE5", color: "#065F46", dot: "#10B981", label: "Available"   },
-  MAINTENANCE: { bg: "#FEF3C7", color: "#92400E", dot: "#F59E0B", label: "Maintenance" },
+const fmtDate = (d) => {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-function RoomThumbnail({ roomId }) {
-  const [src,    setSrc]    = useState(null);
-  const [failed, setFailed] = useState(false);
+const nights = (ci, co) => {
+  if (!ci || !co) return 0;
+  return Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
+};
 
-  useEffect(() => {
-    let cancelled = false;
-    api.get(`${BASE_URL}/api/admin/rooms/${roomId}/images`)
-      .then(res => {
-        if (cancelled) return;
-        const images = res.data || [];
-        if (images.length === 0) { setSrc(""); return; }
-        const main = images.find(img => img.isMain) || images[0];
-        const url  = main.rimageUrl?.startsWith("http") ? main.rimageUrl : `${BASE_URL}${main.rimageUrl}`;
-        setSrc(url);
-      })
-      .catch(() => { if (!cancelled) setSrc(""); });
-    return () => { cancelled = true; };
-  }, [roomId]);
-
-  if (src === null) return <div style={{ width: 48, height: 48, borderRadius: 8, background: "#F3F4F6", animation: "pulse 1.5s infinite" }} />;
-  if (src === "" || failed) return (
-    <div style={{ width: 48, height: 48, borderRadius: 8, background: "#F3F4F6", border: "1.5px dashed #D1D5DB", display: "flex", alignItems: "center", justifyContent: "center", color: "#D1D5DB" }}>
-      <Icons.noImage />
-    </div>
-  );
-  return <img src={src} alt="Room" onError={() => setFailed(true)} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1.5px solid #E5E7EB", display: "block" }} />;
-}
-
-function AvailabilityDropdown({ room, onStatusChange }) {
+function StatusDropdown({ booking, onStatusChange }) {
   const [open,   setOpen]   = useState(false);
   const [saving, setSaving] = useState(false);
-  const ref = useRef(null);
-  const s   = STATUS_COLORS[room.roomStatus] || STATUS_COLORS.AVAILABLE;
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const s = STATUS_CONFIG[booking.bookingStatus] || STATUS_CONFIG.PENDING;
 
   const handleSelect = async (newStatus) => {
-    if (newStatus === room.roomStatus) { setOpen(false); return; }
+    if (newStatus === booking.bookingStatus) { setOpen(false); return; }
     setSaving(true); setOpen(false);
     try {
-      await api.patch(`${BASE_URL}/api/admin/rooms/${room.roomId}/status`,
+      await api.patch(
+        `${BASE_URL}/api/admin/bookings/${booking.bookingId}/status`,
         { status: newStatus },
         { headers: { "Content-Type": "application/json" } }
       );
-      onStatusChange(room.roomId, newStatus);
-    } catch (err) {
-      alert("Failed to update status. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+      onStatusChange(booking.bookingId, newStatus);
+    } catch { alert("Failed to update status."); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen(p => !p)} disabled={saving}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "5px 10px 5px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}22`, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={() => !saving && setOpen(p => !p)}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "5px 10px 5px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}33`, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, fontFamily: "inherit" }}>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: saving ? "#9CA3AF" : s.dot }} />
         {saving ? "Saving..." : s.label}
-        <Icons.chevron />
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", zIndex: 50, minWidth: 160, overflow: "hidden", animation: "slideUp 0.15s ease" }}>
-          <div style={{ padding: "6px 0" }}>
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", padding: "4px 14px 8px" }}>Change Status</p>
-            {Object.entries(STATUS_COLORS).map(([key, val]) => (
-              <button key={key} onClick={() => handleSelect(key)}
-                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: key === room.roomStatus ? val.bg : "transparent", border: "none", cursor: "pointer", fontSize: 13, fontWeight: key === room.roomStatus ? 700 : 500, color: key === room.roomStatus ? val.color : "#374151", textAlign: "left" }}
-                onMouseEnter={e => { if (key !== room.roomStatus) e.currentTarget.style.background = "#F9FAFB"; }}
-                onMouseLeave={e => { if (key !== room.roomStatus) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: val.dot }} />
-                {val.label}
-                {key === room.roomStatus && <span style={{ marginLeft: "auto", fontSize: 11, background: val.dot, color: "#fff", padding: "1px 7px", borderRadius: 10 }}>Current</span>}
-              </button>
-            ))}
-          </div>
+        <div onMouseLeave={() => setOpen(false)}
+          style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", zIndex: 100, minWidth: 160, overflow: "hidden" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase", padding: "8px 14px 4px" }}>Change Status</p>
+          {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+            <button key={key} onClick={() => handleSelect(key)}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: key === booking.bookingStatus ? val.bg : "transparent", border: "none", cursor: "pointer", fontSize: 13, fontWeight: key === booking.bookingStatus ? 700 : 500, color: key === booking.bookingStatus ? val.color : "#374151", textAlign: "left", fontFamily: "inherit" }}
+              onMouseEnter={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "#F9FAFB"; }}
+              onMouseLeave={e => { if (key !== booking.bookingStatus) e.currentTarget.style.background = "transparent"; }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: val.dot, flexShrink: 0 }} />
+              {val.label}
+              {key === booking.bookingStatus && (
+                <span style={{ marginLeft: "auto", fontSize: 10, background: val.dot, color: "#fff", padding: "1px 6px", borderRadius: 10 }}>Current</span>
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function DeleteModal({ room, onConfirm, onCancel, isDeleting }) {
+function ViewModal({ booking, userName, roomName, roomType, onClose }) {
+  if (!booking) return null;
+  const s = STATUS_CONFIG[booking.bookingStatus] || STATUS_CONFIG.PENDING;
+  const n = nights(booking.checkInDate, booking.checkOutDate);
+
+  const Row = ({ label, value }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "11px 0", borderBottom: "1px solid #F3F4F6" }}>
+      <span style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 13, color: "#111827", fontWeight: 600, textAlign: "right", marginLeft: 16 }}>{value}</span>
+    </div>
+  );
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 32, maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", animation: "slideUp 0.2s ease" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center", color: "#EF4444" }}><Icons.warning /></div>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", animation: "fadeUp 0.2s ease" }}>
+
+        {}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#111827" }}>Booking Details</h3>
+            </div>
+            <span style={{ fontSize: 12, color: "#C9A84C", fontWeight: 700 }}>Booking {booking.bookingId}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: s.bg, color: s.color, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 20, border: `1.5px solid ${s.dot}33` }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+              {s.label}
+            </span>
+            <button onClick={onClose}
+              style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontSize: 14, padding: 0 }}>✕</button>
+          </div>
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", textAlign: "center", marginBottom: 8 }}>Delete Room?</h2>
-        <p style={{ fontSize: 14, color: "#6B7280", textAlign: "center", marginBottom: 6 }}>You are about to permanently delete:</p>
-        <p style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", textAlign: "center", marginBottom: 20 }}>#{room.roomId} — {room.roomName}</p>
-        <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 24, fontSize: 13, color: "#991B1B" }}>
-          ⚠ This action <strong>cannot be undone.</strong> The room and all its images will be permanently removed.
+
+        {}
+        <div style={{ padding: "4px 24px 8px" }}>
+          <Row label="Guest"       value={userName || `User ${booking.userId}`} />
+          <Row label="Room"        value={roomName  || `Room ${booking.roomId}`} />
+          <Row label="Room Type"   value={roomType  || "—"} />
+          <Row label="Check-in"    value={fmtDate(booking.checkInDate)} />
+          <Row label="Check-out"   value={fmtDate(booking.checkOutDate)} />
+          <Row label="Duration"    value={`${n} night${n !== 1 ? "s" : ""}`} />
+          <Row label="Guests"      value={`${booking.numberOfGuest} guest${booking.numberOfGuest !== 1 ? "s" : ""}`} />
+          <Row label="Total Price" value={`Rs. ${Number(booking.totalPrice).toLocaleString()}`} />
+          {booking.specialRequest && (
+            <div style={{ padding: "12px 0" }}>
+              <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginBottom: 6 }}>Special Request</div>
+              <div style={{ fontSize: 13, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", lineHeight: 1.6 }}>
+                {booking.specialRequest}
+              </div>
+            </div>
+          )}
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: "11px 0", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>Cancel</button>
-          <button onClick={onConfirm} disabled={isDeleting} style={{ flex: 1, padding: "11px 0", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: isDeleting ? "#FCA5A5" : "linear-gradient(135deg,#EF4444,#DC2626)", color: "#fff", cursor: isDeleting ? "not-allowed" : "pointer" }}>
-            {isDeleting ? "Deleting..." : "Yes, Delete"}
+
+        {}
+        <div style={{ padding: "14px 24px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={onClose}
+            style={{ padding: "9px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}>
+            Close
           </button>
         </div>
       </div>
@@ -132,63 +139,87 @@ function DeleteModal({ room, onConfirm, onCancel, isDeleting }) {
   );
 }
 
-export default function RoomList() {
-  const navigate = useNavigate();
-  const [rooms,        setRooms]        = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
-  const [search,       setSearch]       = useState("");
-  const [roomToDelete, setRoomToDelete] = useState(null);
-  const [isDeleting,   setIsDeleting]   = useState(false);
-  const [toast,        setToast]        = useState("");
-  const [deleteError,  setDeleteError]  = useState(null); 
-
-  useEffect(() => { fetchRooms(); }, []);
-
-  const fetchRooms = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get(`${BASE_URL}/api/admin/rooms`);
-      setRooms(res.data || []);
-    } catch {
-      setError("Failed to load rooms. Make sure the backend is running.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusChange = (roomId, newStatus) => {
-    setRooms(prev => prev.map(r => r.roomId === roomId ? { ...r, roomStatus: newStatus } : r));
-    const label = STATUS_COLORS[newStatus]?.label || newStatus;
-    showToast(`Room status updated to "${label}" ✓`);
-  };
+export default function BookingList() {
+  const [bookings,   setBookings]   = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error,      setError]      = useState(null);
+  const [search,     setSearch]     = useState("");
+  const [fStatus,    setFStatus]    = useState("");
+  const [fDate,      setFDate]      = useState("");
+  const [page,       setPage]       = useState(1);
+  const [toast,      setToast]      = useState("");
+  const [userNames,  setUserNames]  = useState({});
+  const [roomNames,  setRoomNames]  = useState({});
+  const [roomTypes,  setRoomTypes]  = useState({});
+  const [viewModal,  setViewModal]  = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
 
-  const handleDeleteConfirm = async () => {
-    if (!roomToDelete) return;
-    setIsDeleting(true);
+  const fetchBookings = useCallback(async (isRefresh = false) => {
+    setError(null);
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      await api.delete(`${BASE_URL}/api/admin/rooms/${roomToDelete.roomId}`);
-      setRooms(prev => prev.filter(r => r.roomId !== roomToDelete.roomId));
-      setRoomToDelete(null);
-      showToast(`Room "${roomToDelete.roomName}" deleted successfully!`);
-    } catch (err) {
-      const msg = err.response?.data || "Failed to delete room. Please try again.";
-      setRoomToDelete(null);
-      setDeleteError(msg);
-    } finally {
-      setIsDeleting(false);
-    }
+      const res  = await api.get(`${BASE_URL}/api/admin/bookings`);
+      const data = res.data || [];
+      setBookings(data);
+
+      const uids = [...new Set(data.map(b => b.userId))];
+      const rids = [...new Set(data.map(b => b.roomId))];
+
+      const uNames = {};
+      await Promise.all(uids.map(async uid => {
+        try {
+          const r = await api.get(`${BASE_URL}/api/admin/users/${uid}`);
+          const u = r.data;
+          uNames[uid] = `${u.firstName || u.first_name || ""} ${u.lastName || u.last_name || ""}`.trim() || `User ${uid}`;
+        } catch { uNames[uid] = `User ${uid}`; }
+      }));
+      setUserNames(uNames);
+
+      const rNames = {}; const rTyps = {};
+      await Promise.all(rids.map(async rid => {
+        try {
+          const r  = await api.get(`${BASE_URL}/api/admin/rooms/${rid}`);
+          rNames[rid] = r.data.roomName || `Room ${rid}`;
+          rTyps[rid]  = r.data.roomType?.roomTypeName || "";
+        } catch { rNames[rid] = `Room ${rid}`; rTyps[rid] = ""; }
+      }));
+      setRoomNames(rNames); setRoomTypes(rTyps);
+
+    } catch { setError("Failed to load bookings. Make sure the backend is running."); }
+    finally { setLoading(false); setRefreshing(false); }
+  }, []);
+
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+
+  const handleStatusChange = (bookingId, newStatus) => {
+    setBookings(prev => prev.map(b =>
+      b.bookingId === bookingId ? { ...b, bookingStatus: newStatus } : b
+    ));
+    setViewModal(prev => prev?.bookingId === bookingId ? { ...prev, bookingStatus: newStatus } : prev);
+    showToast(`Booking ${bookingId} updated to ${newStatus}`);
   };
 
-  const filteredRooms = rooms.filter(room =>
-    room.roomName?.toLowerCase().includes(search.toLowerCase()) ||
-    room.roomType?.roomTypeName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = bookings.filter(b => {
+    const q = search.toLowerCase();
+    if (q && !(userNames[b.userId] || "").toLowerCase().includes(q) &&
+             !(roomNames[b.roomId] || "").toLowerCase().includes(q) &&
+             !String(b.bookingId).includes(q)) return false;
+    if (fStatus && b.bookingStatus !== fStatus) return false;
+    if (fDate   && b.checkInDate   !== fDate)   return false;
+    return true;
+  });
 
-  const availableCount   = rooms.filter(r => r.roomStatus === "AVAILABLE").length;
-  const maintenanceCount = rooms.filter(r => r.roomStatus === "MAINTENANCE").length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage   = Math.min(page, totalPages);
+  const slice      = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const clearFilters = () => { setSearch(""); setFStatus(""); setFDate(""); setPage(1); };
+
+  const total     = bookings.length;
+  const confirmed = bookings.filter(b => b.bookingStatus === "CONFIRMED").length;
+  const pending   = bookings.filter(b => b.bookingStatus === "PENDING").length;
+  const cancelled = bookings.filter(b => b.bookingStatus === "CANCELLED").length;
 
   return (
     <>
@@ -196,58 +227,73 @@ export default function RoomList() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #F0F2F5; font-family: 'DM Sans','Segoe UI',sans-serif; }
-        .room-row:hover { background: #FFFBEB !important; }
-        .room-row:hover .room-thumb img { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .room-thumb img { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .edit-btn:hover { background: linear-gradient(135deg,#C9A84C,#8B6914) !important; color: #fff !important; border-color: transparent !important; }
-        .edit-btn { transition: all 0.18s; }
-        .del-btn:hover { background: linear-gradient(135deg,#EF4444,#DC2626) !important; color: #fff !important; border-color: transparent !important; }
-        .del-btn { transition: all 0.18s; }
-        .add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,168,76,0.4) !important; }
-        .add-btn { transition: all 0.18s; }
-        .search-input:focus { border-color: #C9A84C !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes slideUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
-        .toast { animation: slideUp 0.3s ease; }
+        .bk-row:hover td { background: #FFFBEB !important; transition: background 0.12s; }
+        .fil-input { font-size: 13px; padding: 6px 10px; border: 1.5px solid #E5E7EB; border-radius: 8px; background: #FAFAFA; color: #111827; height: 36px; font-family: inherit; outline: none; transition: border-color 0.15s, background 0.15s; }
+        .fil-input:focus { border-color: #C9A84C !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+        .btn-outline { font-size: 13px; padding: 6px 16px; border: 1.5px solid #E5E7EB; border-radius: 8px; background: #fff; color: #374151; cursor: pointer; height: 36px; font-family: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: all 0.12s; white-space: nowrap; }
+        .btn-outline:hover { background: #F3F4F6; border-color: #D1D5DB; }
+        .btn-outline:disabled { opacity: 0.6; cursor: not-allowed; }
+        .action-btn { font-size: 12px; padding: 4px 12px; border: 1.5px solid #E5E7EB; border-radius: 6px; background: transparent; color: #374151; cursor: pointer; margin-right: 4px; font-family: inherit; font-weight: 500; transition: all 0.12s; white-space: nowrap; }
+        .action-btn:hover { background: #F3F4F6; border-color: #C9A84C; color: #111827; }
+        .pg-btn { min-width: 28px; height: 28px; font-size: 12px; border: 1.5px solid #E5E7EB; border-radius: 6px; background: #fff; color: #6B7280; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; transition: all 0.12s; }
+        .pg-btn:hover:not(.pg-active):not(:disabled) { background: #F3F4F6; }
+        .pg-active { background: #111827 !important; color: #fff !important; border-color: #111827 !important; }
+        .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .toast { animation: slideUp 0.25s ease; }
+        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+        ::placeholder { color: #C4C9D4; }
+      
+        /* ── Mobile: no horizontal scroll ── */
+        @media (max-width: 768px) {
+          .admin-page-root { overflow-x: hidden !important; }
+          .admin-content-area { padding: 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-area { padding: 12px !important; }
+        }
+      
+        @media (max-width: 768px) {
+          .admin-content-wrap { padding: 16px 14px !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-content-wrap { padding: 12px 10px !important; }
+        }
+      
+        .bl-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        @media (max-width: 900px)  { .bl-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+        @media (max-width: 400px)  { .bl-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; } }
       `}</style>
 
-      {roomToDelete && (
-        <DeleteModal room={roomToDelete} onConfirm={handleDeleteConfirm}
-          onCancel={() => setRoomToDelete(null)} isDeleting={isDeleting} />
-      )}
-
       {}
-      {deleteError && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 32, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🚫</div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 10 }}>Cannot Delete Room</h2>
-            <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.6, marginBottom: 20 }}>{deleteError}</p>
-            <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", marginBottom: 24, fontSize: 13, color: "#92400E", textAlign: "left" }}>
-              💡 <strong>To delete this room:</strong> go to Bookings, find all bookings for this room and cancel them first, then try deleting again.
-            </div>
-            <button onClick={() => setDeleteError(null)}
-              style={{ padding: "10px 32px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer" }}>
-              OK, Got It
-            </button>
-          </div>
-        </div>
+      {viewModal && (
+        <ViewModal
+          booking={viewModal}
+          userName={userNames[viewModal.userId]}
+          roomName={roomNames[viewModal.roomId]}
+          roomType={roomTypes[viewModal.roomId]}
+          onClose={() => setViewModal(null)}
+        />
       )}
 
-      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", overflowX: "hidden", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
+          <AdminTopBar pageTitle="Bookings" />
 
           {}
           <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <span style={{ color: "#9CA3AF" }}>Admin</span>
               <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Room Management</span>
+              <span style={{ color: "#111827", fontWeight: 600 }}>Bookings</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
               <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
+              {}
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
                 <div>
@@ -259,131 +305,186 @@ export default function RoomList() {
             </div>
           </div>
 
-          <div style={{ padding: "32px", flex: 1 }}>
+          <div className="admin-content-wrap" style={{ padding: "28px 32px", flex: 1 }}>
 
             {}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
-              <div>
-                <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Room Management</h1>
-                <p style={{ fontSize: 14, color: "#6B7280" }}>View, add, update and delete hotel rooms. Click availability badge to change status instantly.</p>
-              </div>
-              <button className="add-btn" onClick={() => navigate("/admin/rooms/add")}
-                style={{ padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)" }}>
-                <Icons.plus /> Add New Room
-              </button>
+            <div style={{ marginBottom: 24 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 4 }}>All Bookings</h1>
+              <p style={{ fontSize: 14, color: "#6B7280" }}>View and manage all hotel room bookings.</p>
             </div>
 
             {}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+            <div className="bl-stat-grid" style={{ marginBottom: 24 }}>
               {[
-                { label: "Total Rooms",   value: rooms.length,    color: "#C9A84C" },
-                { label: "Available",     value: availableCount,  color: "#10B981" },
-                { label: "Maintenance",   value: maintenanceCount, color: "#F59E0B" },
-              ].map(({ label, value, color }) => (
-                <div key={label} style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", borderLeft: `4px solid ${color}` }}>
-                  <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 4 }}>{value}</div>
-                  <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>{label}</div>
+                { label: "Total Bookings", value: total,     color: "#111827", border: "#C9A84C" },
+                { label: "Confirmed",      value: confirmed, color: "#065F46", border: "#10B981" },
+                { label: "Pending",        value: pending,   color: "#92400E", border: "#F59E0B" },
+                { label: "Cancelled",      value: cancelled, color: "#991B1B", border: "#EF4444" },
+              ].map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", borderLeft: `4px solid ${s.border}` }}>
+                  <div style={{ fontSize: 11, color: "#6B7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>{s.label}</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
                 </div>
               ))}
             </div>
 
             {}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
-                  <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>All Rooms</span>
-                  <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 10px", borderRadius: 20 }}>{filteredRooms.length}</span>
-                </div>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }}><Icons.search /></span>
-                  <input className="search-input"
-                    style={{ paddingLeft: 36, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#FAFAFA", fontSize: 13, width: 220, color: "#111827" }}
-                    placeholder="Search rooms..." value={search} onChange={e => setSearch(e.target.value)} />
-                </div>
+
+              {}
+              <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Booking Records</span>
+                <span style={{ background: "#F3F4F6", color: "#6B7280", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 10, marginLeft: 4 }}>{total}</span>
               </div>
 
+              {}
+              <div style={{ padding: "16px 28px", borderBottom: "1px solid #F9FAFB", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input className="fil-input" style={{ paddingLeft: 32, width: "100%" }}
+                    placeholder="Search guest name or booking ID..."
+                    value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+                </div>
+
+                <select className="fil-input" style={{ minWidth: 140 }} value={fStatus}
+                  onChange={e => { setFStatus(e.target.value); setPage(1); }}>
+                  <option value="">All statuses</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+
+                <input className="fil-input" type="date" style={{ width: 160 }}
+                  value={fDate} onChange={e => { setFDate(e.target.value); setPage(1); }} />
+
+                <button className="btn-outline" onClick={clearFilters}>Clear</button>
+
+                <button className="btn-outline" onClick={() => fetchBookings(true)} disabled={refreshing}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ animation: refreshing ? "spin 0.8s linear infinite" : "none" }}>
+                    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+
+              {}
               {loading ? (
-                <div style={{ padding: 48, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading rooms...</div>
+                <div style={{ padding: 56, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading bookings...</div>
               ) : error ? (
-                <div style={{ padding: 48, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
-              ) : filteredRooms.length === 0 ? (
+                <div style={{ padding: 56, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
+              ) : filtered.length === 0 ? (
                 <div style={{ padding: 64, textAlign: "center" }}>
-                  <div style={{ color: "#D1D5DB", display: "flex", justifyContent: "center", marginBottom: 16 }}><Icons.empty /></div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>No rooms found</div>
-                  <div style={{ fontSize: 13, color: "#9CA3AF" }}>Add your first room using the button above.</div>
+                  <div style={{ fontSize: 40, marginBottom: 14 }}>📋</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 6 }}>No bookings found</div>
+                  <div style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 20 }}>
+                    {search || fStatus || fDate ? "Try clearing the filters." : "No bookings yet."}
+                  </div>
+                  {(search || fStatus || fDate) && (
+                    <button className="btn-outline" onClick={clearFilters}>Clear Filters</button>
+                  )}
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
-                      {["ID", "Image", "Room Name", "Type", "Price", "Capacity", "Status", "Action"].map(h => (
-                        <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.8px", textTransform: "uppercase" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRooms.map((room, i) => (
-                      <tr key={room.roomId} className="room-row"
-                        style={{ borderBottom: "1px solid #F9FAFB", background: i % 2 === 0 ? "#fff" : "#FAFAFA" }}>
-
-                        {}
-                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#9CA3AF", fontWeight: 600 }}>{room.roomId}</td>
-
-                        {}
-                        <td style={{ padding: "10px 20px" }}>
-                          <div className="room-thumb"><RoomThumbnail roomId={room.roomId} /></div>
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px" }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{room.roomName}</div>
-                          {}
-                          <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-                            {room.roomType?.roomDescription?.substring(0, 40)}
-                            {room.roomType?.roomDescription?.length > 40 ? "..." : ""}
-                          </div>
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px" }}>
-                          <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>
-                            {room.roomType?.roomTypeName || "—"}
-                          </span>
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#374151", fontWeight: 600 }}>
-                          Rs. {Number(room.roomPrice || 0).toLocaleString()}
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#374151", fontWeight: 500 }}>
-                          {room.roomType?.capacity || "—"} guests
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px" }}>
-                          <AvailabilityDropdown room={room} onStatusChange={handleStatusChange} />
-                        </td>
-
-                        {}
-                        <td style={{ padding: "14px 20px" }}>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <button className="edit-btn" onClick={() => navigate(`/admin/rooms/edit/${room.roomId}`)}
-                              style={{ padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                              <Icons.edit /> Edit
-                            </button>
-                            <button className="del-btn" onClick={() => setRoomToDelete(room)}
-                              style={{ padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: "1.5px solid #FECACA", background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                              <Icons.trash /> Delete
-                            </button>
-                          </div>
-                        </td>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: 950 }}>
+                    <thead>
+                      <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
+                        {[
+                          ["Booking ID","90px"],["Guest Name","150px"],["Room","130px"],
+                          ["Type","140px"],["Check-in","105px"],["Check-out","105px"],
+                          ["Nights","70px"],["Total","100px"],["Status","120px"],["Actions","100px"],
+                        ].map(([h, w]) => (
+                          <th key={h} style={{ width: w, textAlign: "left", padding: "11px 16px", color: "#9CA3AF", fontWeight: 700, fontSize: 11, letterSpacing: "0.8px", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {slice.map((b, i) => {
+                        const n = nights(b.checkInDate, b.checkOutDate);
+                        return (
+                          <tr key={b.bookingId} className="bk-row"
+                            style={{ background: i % 2 === 0 ? "#fff" : "#FAFAFA", borderBottom: "1px solid #F9FAFB" }}>
+
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <span style={{ fontWeight: 700, color: "#C9A84C", fontSize: 13 }}>{b.bookingId}</span>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: 600, color: "#111827" }}>{userNames[b.userId] || `User ${b.userId}`}</div>
+                              <div style={{ fontSize: 11, color: "#9CA3AF" }}>User ID: {b.userId}</div>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <div style={{ fontWeight: 600, color: "#111827" }}>{roomNames[b.roomId] || `Room ${b.roomId}`}</div>
+                              <div style={{ fontSize: 11, color: "#9CA3AF" }}>Room ID: {b.roomId}</div>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 12, color: "#6B7280" }}>{roomTypes[b.roomId] || "—"}</span>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap", color: "#374151" }}>
+                              {fmtDate(b.checkInDate)}
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap", color: "#374151" }}>
+                              {fmtDate(b.checkOutDate)}
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <span style={{ background: "#F3F4F6", color: "#374151", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 10 }}>
+                                {n}n
+                              </span>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <span style={{ fontWeight: 700, color: "#111827" }}>Rs. {Number(b.totalPrice).toLocaleString()}</span>
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px" }}>
+                              <StatusDropdown booking={b} onStatusChange={handleStatusChange} />
+                            </td>
+
+                            {}
+                            <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                              <button className="action-btn" onClick={() => setViewModal(b)}>View</button>
+                            </td>
+
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {}
+              {filtered.length > 0 && (
+                <div style={{ padding: "14px 28px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, color: "#9CA3AF", marginRight: "auto" }}>
+                    Showing {Math.min((safePage - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(safePage * PER_PAGE, filtered.length)} of {filtered.length} bookings
+                  </span>
+                  <button className="pg-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}>←</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button key={p} className={`pg-btn${p === safePage ? " pg-active" : ""}`} onClick={() => setPage(p)}>{p}</button>
+                  ))}
+                  <button className="pg-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>→</button>
+                </div>
               )}
             </div>
           </div>

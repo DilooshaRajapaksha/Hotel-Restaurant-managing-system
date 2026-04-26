@@ -1,33 +1,36 @@
 package com.hotel.backend.Controller;
 
-import com.hotel.backend.DTO.RoomResponse;
-import com.hotel.backend.Service.CustomerRoomService;
+import com.hotel.backend.Entity.HotelImage;
+import com.hotel.backend.Entity.Room;
+import com.hotel.backend.Service.RoomService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/rooms")
 @CrossOrigin(origins = "http://localhost:5173")
-public class PublicRoomController {   // ← Renamed for clarity
+public class PublicRoomController {
 
-    private final CustomerRoomService customerRoomService;
+    @Autowired
+    private RoomService roomService;
 
-    public PublicRoomController(CustomerRoomService customerRoomService) {
-        this.customerRoomService = customerRoomService;
+    @GetMapping
+    public ResponseEntity<List<Room>> getAllRooms() {
+        return ResponseEntity.ok(roomService.getAllRooms());
     }
 
-    @GetMapping("/rooms")
-    public List<RoomResponse> getAllRooms() {
-        return customerRoomService.getAllRooms();
+    @GetMapping("/{id}")
+    public ResponseEntity<Room> getRoomById(@PathVariable Long id) {
+        return roomService.getRoomById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/rooms/{id}")
-    public ResponseEntity<RoomResponse> getRoomById(@PathVariable Long id) {
-        RoomResponse room = customerRoomService.getRoomById(id);
-        return room != null
-                ? ResponseEntity.ok(room)
-                : ResponseEntity.notFound().build();
+    @GetMapping("/{id}/images")
+    public ResponseEntity<List<HotelImage>> getRoomImages(@PathVariable Long id) {
+        return ResponseEntity.ok(roomService.getImagesByRoomId(id));
     }
 }

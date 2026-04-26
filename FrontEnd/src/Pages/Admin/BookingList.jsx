@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import api from "../../Utils/axiosInstance";
+import AdminTopBar from "../../Components/Admin/AdminTopBar";
+import api from "../../utils/axiosInstance";
 
 const BASE_URL = "http://localhost:8080";
 const PER_PAGE = 6;
@@ -244,6 +245,16 @@ export default function BookingList() {
         .toast { animation: slideUp 0.25s ease; }
         input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
         ::placeholder { color: #C4C9D4; }
+
+        .table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-scroll table { min-width: 700px; }
+        @media (max-width: 1024px) { .bl-stats { grid-template-columns: repeat(3,1fr) !important; } }
+        @media (max-width: 768px)  { .bl-stats { grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; } }
+        @media (max-width: 480px)  { .bl-stats { grid-template-columns: 1fr 1fr !important; } }
+
+        .pg-stat-grid { display: grid; gap: 14px; }
+        @media (max-width: 900px) { .pg-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; } }
+        @media (max-width: 400px) { .pg-stat-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; } }
       `}</style>
 
       {}
@@ -260,30 +271,8 @@ export default function BookingList() {
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
-
-          {}
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Bookings</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
-              <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
-              {}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
-                  <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: "28px 32px", flex: 1 }}>
+          <AdminTopBar pageTitle="Bookings" />
+          {}          <div style={{ padding: "28px 32px", flex: 1 }}>
 
             {}
             <div style={{ marginBottom: 24 }}>
@@ -292,7 +281,7 @@ export default function BookingList() {
             </div>
 
             {}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+            <div className="pg-stat-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
               {[
                 { label: "Total Bookings", value: total,     color: "#111827", border: "#C9A84C" },
                 { label: "Confirmed",      value: confirmed, color: "#065F46", border: "#10B981" },
@@ -368,7 +357,7 @@ export default function BookingList() {
                 </div>
               ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: 950 }}>
+                  <div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: 950 }}>
                     <thead>
                       <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
                         {[
@@ -447,7 +436,7 @@ export default function BookingList() {
                         );
                       })}
                     </tbody>
-                  </table>
+                  </table></div>
                 </div>
               )}
 

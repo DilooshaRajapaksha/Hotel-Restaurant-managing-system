@@ -4,7 +4,7 @@ import AdminTopBar from "../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import api from "../../Utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8081";
 const MONTHS   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const fmt  = (n) => Number(n || 0).toLocaleString();
@@ -142,54 +142,22 @@ export default function AdminDashboard() {
           from { transform: scale(0); }
           to   { transform: scale(1); }
         }
-      
-        /* ── Mobile: no horizontal scroll ── */
-        @media (max-width: 768px) {
-          .admin-page-root { overflow-x: hidden !important; }
-          .admin-content-area { padding: 16px !important; }
-        }
-        @media (max-width: 480px) {
-          .admin-content-area { padding: 12px !important; }
-        }
-      
-        @media (max-width: 768px) {
-          .admin-content-wrap { padding: 16px 14px !important; }
-        }
-        @media (max-width: 480px) {
-          .admin-content-wrap { padding: 12px 10px !important; }
-        }
-      
-        /* Dashboard responsive grids */
-        .dash-stat  { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
-        .dash-room  { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
-        .dash-chart { display: grid; grid-template-columns: 1fr 380px; gap: 20px; margin-bottom: 20px; }
-        .dash-sum   { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; }
-        @media (max-width: 1100px) {
-          .dash-chart { grid-template-columns: 1fr; }
-          .dash-sum   { grid-template-columns: repeat(3,1fr); }
-        }
-        @media (max-width: 768px) {
-          .dash-stat  { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .dash-room  { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .dash-sum   { grid-template-columns: repeat(2,1fr); gap: 10px; }
-        }
-        @media (max-width: 480px) {
-          .dash-stat  { grid-template-columns: 1fr 1fr; gap: 8px; }
-          .dash-room  { grid-template-columns: 1fr 1fr; gap: 8px; }
-          .dash-sum   { grid-template-columns: repeat(2,1fr); gap: 8px; }
-        }
+
+        .pg-stat-grid { display: grid; gap: 14px; }
+        @media (max-width: 900px) { .pg-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; } }
+        @media (max-width: 400px) { .pg-stat-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; } }
       `}</style>
 
-      {/* Toast (top center) */}
+      {/* ── Toast (top center) ── */}
 
-      {/* Right drawer */}
-      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", overflowX: "hidden", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+      {/* ── Right drawer ── */}
+      <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <AdminTopBar pageTitle="Reports & Dashboard" />
 
-      {/* Topbar */}
-       <div className="admin-content-wrap" style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
+          {/* ── Topbar ── */}
+          <AdminTopBar pageTitle="Reports & Dashboard" />
+               <div style={{ padding: "32px", flex: 1, overflowY: "auto" }}>
 
             {/* Page title */}
             <div style={{ marginBottom: 28 }}>
@@ -205,7 +173,7 @@ export default function AdminDashboard() {
               <div style={{ padding: 80, textAlign: "center", color: "#EF4444", fontSize: 14 }}>{error}</div>
             ) : (
               <>
-                <div className="dash-stat" style={{}}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 20 }}>
                   <StatCard label="Total Revenue"    value={fmtR(data.totalRevenue)}    color="#C9A84C" icon="💰" sub="From confirmed bookings" />
                   <StatCard label="Total Bookings"   value={fmt(data.totalBookings)}    color="#6366F1" icon="📅" sub={`${fmt(data.confirmedBookings)} confirmed`} />
                   <StatCard label="Registered Users" value={fmt(data.totalUsers)}       color="#F59E0B" icon="👥" sub="Customers" />
@@ -215,7 +183,7 @@ export default function AdminDashboard() {
                 <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>🏨 Room Availability</div>
                   <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 20 }}>Current status of all {fmt(data.totalRooms)} rooms</div>
-                  <div className="dash-room" style={{}}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                     <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "18px 20px", borderLeft: "4px solid #C9A84C" }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: "#C9A84C" }}>{fmt(data.totalRooms)}</div>
                       <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500, marginTop: 4 }}>Total Rooms</div>
@@ -244,7 +212,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="dash-chart" style={{}}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -283,7 +251,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="dash-chart" style={{}}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginBottom: 20 }}>
                   <div style={{ background: "#fff", borderRadius: 14, padding: "24px 28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                       <div>
@@ -356,7 +324,7 @@ export default function AdminDashboard() {
                     📊 {data.currentYear} Year Summary
                   </div>
                   <div style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 24 }}>Golden Stars Hotel & Restaurant — annual overview</div>
-                  <div className="dash-sum" style={{}}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }}>
                     {[
                       { label: "Total Rooms",   value: fmt(data.totalRooms),        icon: "🏨", color: "#C9A84C" },
                       { label: "Available",     value: fmt(data.availableRooms),    icon: "✅", color: "#10B981" },
@@ -382,4 +350,3 @@ export default function AdminDashboard() {
     </>
   );
 }
-

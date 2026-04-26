@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   xIcon: () => (
@@ -324,6 +325,7 @@ export default function UpdateFood() {
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
+          <AdminTopBar pageTitle="Edit Food" />
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 24 }}>
               <button className="bk" onClick={() => navigate("/admin/menu")} style={{ marginBottom: 12 }}>

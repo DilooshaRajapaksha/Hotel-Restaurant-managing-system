@@ -17,7 +17,6 @@ const STATUS_CONFIG = {
 const fmtDate = (dt) => dt ? new Date(dt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 const fmtTime = (dt) => dt ? new Date(dt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
 
-// ── Assign Staff Dropdown ──────────────────────────────────────────────────
 function AssignDropdown({ order, staffList, onAssign, onUnassign, onReassign }) {
   const [open,    setOpen]    = useState(false);
   const [saving,  setSaving]  = useState(false);
@@ -91,7 +90,6 @@ function AssignDropdown({ order, staffList, onAssign, onUnassign, onReassign }) 
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────
 export default function AssignOrdersPage() {
   const [orders,   setOrders]   = useState([]);
   const [staff,    setStaff]    = useState([]);
@@ -186,7 +184,6 @@ export default function AssignOrdersPage() {
               <p style={{ fontSize: 14, color: "#6B7280" }}>Assign delivery staff to food orders.</p>
             </div>
 
-            {/* Stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
               {[
                 { label: "Total Orders",      value: orders.length, border: GOLD },
@@ -200,7 +197,6 @@ export default function AssignOrdersPage() {
               ))}
             </div>
 
-            {/* Main card */}
             <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
               {/* Filters */}
@@ -221,7 +217,6 @@ export default function AssignOrdersPage() {
                 <button onClick={loadData} style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>↻ Refresh</button>
               </div>
 
-              {/* Table */}
               {loading ? (
                 <div style={{ padding: 56, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>Loading orders...</div>
               ) : filtered.length === 0 ? (

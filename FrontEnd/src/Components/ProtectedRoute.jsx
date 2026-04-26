@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../Context/AuthContext';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user } = useContext(AuthContext);
@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     const redirectMap = {
       ADMIN: '/admin',
       CUSTOMER: '/',
-      DELIVERY: '/delivery',
+      DELIVERY_STAFF: '/delivery',
     };
     return <Navigate to={redirectMap[user.role] || '/'} replace />;
   }

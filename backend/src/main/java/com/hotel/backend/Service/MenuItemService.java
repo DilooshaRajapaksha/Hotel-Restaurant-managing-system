@@ -38,7 +38,6 @@ public class MenuItemService {
     }
 
     public MenuItemDTO create(MenuItemDTO dto, List<MultipartFile> images) throws Exception {
-        // category_id NOT NULL + must exist
         if (dto.getCategory_id() == null) throw new RuntimeException("category_id is required");
         if (!categoryRepo.existsById(dto.getCategory_id())) throw new RuntimeException("Invalid category_id");
 
@@ -55,7 +54,6 @@ public class MenuItemService {
     public MenuItemDTO update(Long id, MenuItemDTO dto, List<MultipartFile> images) throws Exception {
         MenuItem item = menuItemRepo.findById(id).orElseThrow(() -> new RuntimeException("Menu item not found"));
 
-        // category_id is NOT NULL - if frontend sends empty, keep old
         if (dto.getCategory_id() != null) {
             if (!categoryRepo.existsById(dto.getCategory_id())) throw new RuntimeException("Invalid category_id");
             item.setCategoryId(dto.getCategory_id());
@@ -87,7 +85,6 @@ public class MenuItemService {
         imageRepo.delete(img);
     }
 
-
     public void deleteItem(Long id) {
         if (!menuItemRepo.existsById(id)) {
             throw new RuntimeException("Menu item not found.");
@@ -95,7 +92,6 @@ public class MenuItemService {
 
         menuItemRepo.deleteById(id);
     }
-    // helpers
 
     private void saveImages(Long itemId, List<MultipartFile> images) throws Exception {
         boolean hasAny = imageRepo.findByItemId(itemId).size() > 0;
@@ -106,7 +102,7 @@ public class MenuItemService {
             MenuImage img = new MenuImage();
             img.setItemId(itemId);
             img.setFimageUrl(url);
-            img.setIsMain(!hasAny); // first image becomes MAIN
+            img.setIsMain(!hasAny);
             imageRepo.save(img);
 
             hasAny = true;
@@ -124,6 +120,12 @@ public class MenuItemService {
         dto.setFull_price(i.getFullPrice());
         dto.setPreparation_time(i.getPreparationTime());
         dto.setIs_available(i.getIsAvailable());
+
+        imageRepo.findByItemId(i.getItemId()).stream()
+                .filter(img -> Boolean.TRUE.equals(img.getIsMain()))
+                .findFirst()
+                .ifPresent(img -> dto.setImage_url(img.getFimageUrl()));
+
         return dto;
     }
 

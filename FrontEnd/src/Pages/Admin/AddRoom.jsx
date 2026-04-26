@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminTopBar from "../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../Components/Admin/AdminSideBar";
-import api from "../../Utils/axiosInstance";
+import api from "../../utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8081";
 
 const FALLBACK_ROOM_TYPES = [
   { roomTypeName: "Two-Bedroom Villa",                        capacity: 4 },
@@ -320,26 +321,7 @@ export default function AddRoom() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
           {/* Topbar */}
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span><span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#9CA3AF", cursor: "pointer" }} onClick={() => navigate("/admin/rooms")}>Room Management</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Add New Room</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>🔔</button>
-              <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>A</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
-                  <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </div>
-          </div>
+          <AdminTopBar pageTitle="Add Room" />
 
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ marginBottom: 24 }}>

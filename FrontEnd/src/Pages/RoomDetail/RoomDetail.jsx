@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ImageGallery from '../../Components/ImageGallery/ImageGallery';
+import PanoramaViewer from '../../Components/PanoramaViewer';
 import BookingForm from '../../Components/BookingForm/BookingForm';
 import './RoomDetail.css';
 
@@ -11,6 +12,8 @@ const RoomDetail = () => {
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
+  const [roomImages, setRoomImages] = useState([]);
+  const [showPanorama, setShowPanorama] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,20 +24,33 @@ const RoomDetail = () => {
       return;
     }
 
-    fetch(`${BASE_URL}/api/public/rooms/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Room not found (Status: ${res.status})`);
-        return res.json();
-      })
-      .then((data) => {
-        setRoom(data);
+    const loadRoom = async () => {
+      try {
+        const roomRes = await fetch(`${BASE_URL}/api/public/rooms/${id}`);
+        if (!roomRes.ok) throw new Error(`Room not found (Status: ${roomRes.status})`);
+        const roomData = await roomRes.json();
+        setRoom(roomData);
+
+        const imgRes = await fetch(`${BASE_URL}/api/public/rooms/${id}/images`);
+        const imgData = await imgRes.json();
+
+        const processed = imgData.map(img => ({
+          url: img.rimageUrl.startsWith("http") ? img.rimageUrl : `${BASE_URL}${img.rimageUrl}`,
+          is360: !!img.is360,
+          isMain: !!img.isMain
+        }));
+
+        setRoomImages(processed);
         setError(null);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(err);
         setError(err.message);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRoom();
   }, [id]);
 
   const handleBookNow = () => {
@@ -47,6 +63,39 @@ const RoomDetail = () => {
     }, 2000);
   };
 
+const sampleHotspots = [
+  {
+    pitch: -12,
+    yaw: 45,
+    type: "info",
+    text: "🛏 King Bed - Premium Comfort"
+  },
+  {
+    pitch: 8,
+    yaw: -80,
+    type: "info",
+    text: "🚿 Luxury Bathroom"
+  },
+  {
+    pitch: -5,
+    yaw: 120,
+    type: "info",
+    text: "🌅 Balcony View"
+  },
+  {
+    pitch: 15,
+    yaw: -30,
+    type: "info",
+    text: "📺 Smart TV"
+  },
+  {
+    pitch: -20,
+    yaw: -140,
+    type: "info",
+    text: "🍷 Mini Bar"
+  }
+];
+
   if (loading) return <div className="room-detail-container"><p>Loading room...</p></div>;
 
   if (error || !room) {
@@ -58,12 +107,6 @@ const RoomDetail = () => {
     );
   }
 
-  const images = [
-    room.imageUrl?.startsWith("http") ? room.imageUrl : `${BASE_URL}${room.imageUrl || ""}`,
-    "https://images.unsplash.com/photo-1611892440504-42a79208a498",
-    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
-  ].filter(Boolean);
-
   return (
     <div className="room-detail-container">
 
@@ -73,32 +116,35 @@ const RoomDetail = () => {
 
       <div className="room-detail">
 
-        {/* LEFT SIDE */}
+        {/* LEFT SIDE - Gallery + Booking Form */}
         <div className="left-section">
           <div className="room-images">
-            <ImageGallery images={images} roomName={room.name} />
+            <ImageGallery 
+              images={roomImages} 
+              roomName={room.roomName || room.name} 
+              onPanoramaClick={(url) => setShowPanorama(url)}
+            />
           </div>
 
-          {/* Booking form under image */}
           <div className="booking-section">
             <h2>Book Directly with GoldenStars</h2>
             <BookingForm room={room} onBookingSuccess={handleBookingSuccess} />
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT SIDE - Details */}
         <div className="right-section">
 
-          <h1 className="room-title">{room.name}</h1>
+          <h1 className="room-title">{room.roomName || room.name}</h1>
 
           <p className="description">{room.description}</p>
 
           <div className="details-section">
             <h3>Room Details</h3>
             <ul>
-              <li><strong>Capacity:</strong> {room.capacity} guests</li>
-              <li><strong>Price:</strong> Rs. {room.price?.toLocaleString()} / night</li>
-              <li><strong>Status:</strong> {room.status}</li>
+              <li><strong>Capacity:</strong> {room.roomType?.capacity || room.capacity || 2} guests</li>
+              <li><strong>Price:</strong> Rs. {(room.roomPrice || room.price || 0).toLocaleString()} / night</li>
+              <li><strong>Status:</strong> {room.roomStatus || room.status}</li>
             </ul>
           </div>
 
@@ -112,6 +158,16 @@ const RoomDetail = () => {
 
         </div>
       </div>
+
+      {/* 360° Panorama Modal */}
+      {showPanorama && (
+        <PanoramaViewer
+          imageUrl={showPanorama}
+          hotspots={sampleHotspots}
+          onClose={() => setShowPanorama(null)}
+        />
+      )}
+
     </div>
   );
 };

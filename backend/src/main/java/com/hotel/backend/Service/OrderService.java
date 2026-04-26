@@ -7,6 +7,7 @@ import com.hotel.backend.DTO.PlaceOrderItemDTO;
 import com.hotel.backend.DTO.PlaceOrderRequestDTO;
 import com.hotel.backend.Entity.Address;
 import com.hotel.backend.Entity.FoodOrder;
+import com.hotel.backend.Entity.OrderStatus;
 import com.hotel.backend.Entity.OrderItem;
 import com.hotel.backend.Entity.Payment;
 import com.hotel.backend.Entity.User;
@@ -34,7 +35,7 @@ public class OrderService {
     private final UserRepo userRepo;
     private final MenuItemRepo menuItemRepo;
     private final AddressRepo addressRepo;
-    private final SimpMessagingTemplate messagingTemplate;   // Message
+    private final SimpMessagingTemplate messagingTemplate;
 
     public OrderService(FoodOrderRepo foodOrderRepo,
                         OrderItemRepo orderItemRepo,
@@ -53,9 +54,8 @@ public class OrderService {
     }
 
     public OrderResponseDTO placeOrder(Long userId, PlaceOrderRequestDTO request) {
-        if (request.getItems() == null || request.getItems().isEmpty()) {
+        if (request.getItems() == null || request.getItems().isEmpty())
             throw new RuntimeException("Order must contain at least one item");
-        }
 
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -90,7 +90,8 @@ public class OrderService {
         order.setUser(user);
         order.setAddress(savedAddress);
         order.setOrderDate(LocalDateTime.now());
-        order.setOrderStatus("PENDING");
+        // FIX: set enum value, not String
+        order.setOrderStatus(OrderStatus.PENDING);
         order.setTotalAmount(BigDecimal.ZERO);
 
         FoodOrder savedOrder = foodOrderRepo.save(order);
@@ -109,18 +110,8 @@ public class OrderService {
             if (menuItem.getIsAvailable() == null || !menuItem.getIsAvailable())
                 throw new RuntimeException("Menu item is unavailable: " + menuItem.getItemName());
 
-            // Resolve price from selectedSize
-            BigDecimal unitPrice;
-            String size = reqItem.getSelectedSize();
-            if ("HALF".equalsIgnoreCase(size) && menuItem.getHalfPrice() != null && menuItem.getHalfPrice().compareTo(BigDecimal.ZERO) > 0) {
-                unitPrice = menuItem.getHalfPrice();
-            } else if ("FULL".equalsIgnoreCase(size) && menuItem.getFullPrice() != null && menuItem.getFullPrice().compareTo(BigDecimal.ZERO) > 0) {
-                unitPrice = menuItem.getFullPrice();
-            } else {
-                // DEFAULT or no size specified — use base price
-                unitPrice = menuItem.getPrice();
-            }
-            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(reqItem.getQuantity()));
+            BigDecimal unitPrice = menuItem.getPrice();
+            BigDecimal subtotal  = unitPrice.multiply(BigDecimal.valueOf(reqItem.getQuantity()));
             totalAmount = totalAmount.add(subtotal);
 
             OrderItem orderItem = new OrderItem();
@@ -148,7 +139,6 @@ public class OrderService {
 
         OrderResponseDTO result = getOrderById(savedOrder.getOrderId());
 
-        // Push WebSocket notification to admin
         String customerName = user.getFirstName() + " " + user.getLastName();
         String msg = customerName + " · LKR " + totalAmount.toPlainString();
         NotificationPayloadDTO notif = new NotificationPayloadDTO(
@@ -178,12 +168,13 @@ public class OrderService {
     public OrderResponseDTO updateOrderStatus(Long orderId, String newStatus) {
         FoodOrder order = foodOrderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        validateStatus(newStatus);
-        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus()))
+        // FIX: compare enum values, not strings
+        OrderStatus parsed = parseStatus(newStatus);
+        if (order.getOrderStatus() == OrderStatus.CANCELLED)
             throw new RuntimeException("Cancelled order cannot be updated");
-        if ("DELIVERED".equalsIgnoreCase(order.getOrderStatus()))
+        if (order.getOrderStatus() == OrderStatus.DELIVERED)
             throw new RuntimeException("Delivered order cannot be updated");
-        order.setOrderStatus(newStatus);
+        order.setOrderStatus(parsed);
         foodOrderRepo.save(order);
         return toDetailsDTO(order);
     }
@@ -191,19 +182,23 @@ public class OrderService {
     public OrderResponseDTO cancelOrder(Long orderId) {
         FoodOrder order = foodOrderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        if ("DELIVERED".equalsIgnoreCase(order.getOrderStatus()))
+        // FIX: compare enum values
+        if (order.getOrderStatus() == OrderStatus.DELIVERED)
             throw new RuntimeException("Delivered order cannot be cancelled");
-        if ("CANCELLED".equalsIgnoreCase(order.getOrderStatus()))
+        if (order.getOrderStatus() == OrderStatus.CANCELLED)
             throw new RuntimeException("Order is already cancelled");
-        order.setOrderStatus("CANCELLED");
+        order.setOrderStatus(OrderStatus.CANCELLED);
         foodOrderRepo.save(order);
         return toDetailsDTO(order);
     }
 
-    private void validateStatus(String status) {
-        List<String> allowed = List.of("PENDING","CONFIRMED","PREPARING","OUT_FOR_DELIVERY","DELIVERED","CANCELLED");
-        if (status == null || !allowed.contains(status))
+    // FIX: parse String -> enum safely
+    private OrderStatus parseStatus(String status) {
+        try {
+            return OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
             throw new RuntimeException("Invalid order status: " + status);
+        }
     }
 
     private OrderResponseDTO toListDTO(FoodOrder order) {
@@ -211,7 +206,8 @@ public class OrderService {
         dto.setOrder_id(order.getOrderId());
         dto.setOrder_date(order.getOrderDate());
         dto.setTotal_amount(order.getTotalAmount());
-        dto.setOrder_status(order.getOrderStatus());
+        // FIX: convert enum to String for DTO
+        dto.setOrder_status(order.getOrderStatus() != null ? order.getOrderStatus().name() : null);
         dto.setUser_id(order.getUser().getUserId());
         dto.setCustomer_name(order.getUser().getFirstName() + " " + order.getUser().getLastName());
         dto.setCustomer_email(order.getUser().getEmail());

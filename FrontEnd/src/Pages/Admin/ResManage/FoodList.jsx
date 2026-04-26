@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminTopBar from "../../../Components/Admin/AdminTopBar";
 import AdminSidebar from "../../../Components/Admin/AdminSideBar";
-import api from "../../../Utils/axiosInstance";
+import api from "../../../utils/axiosInstance";
 
 const Icons = {
   plus: () => (
@@ -231,35 +232,17 @@ export default function FoodList() {
         .add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(201,168,76,0.4) !important; }
         .add-btn { transition: all 0.18s; }
         .search-input:focus { border-color: #C9A84C !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); outline: none; }
+
+        .table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-scroll table { min-width: 680px; }
+        @media (max-width: 768px) { .fl-filter { flex-direction: column !important; } .fl-filter > * { width: 100% !important; } }
       `}</style>
 
       <div style={{ display: "flex", width: "100%", minHeight: "100vh", background: "#F0F2F5", fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
         <AdminSidebar />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-              <span style={{ color: "#9CA3AF" }}>Admin</span>
-              <span style={{ color: "#D1D5DB" }}>›</span>
-              <span style={{ color: "#111827", fontWeight: 600 }}>Menu Management</span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ width: 38, height: 38, borderRadius: "50%", border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151", padding: 0 }}>
-                🔔
-              </button>
-              <div style={{ width: 1, height: 32, background: "#E5E7EB" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#FAFAFA" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#C9A84C,#8B6914)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>
-                  A
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Admin</div>
-                  <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.2 }}>administrator@goldenstar.lk</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AdminTopBar pageTitle="Menu Management" />
 
           <div style={{ padding: "32px", flex: 1 }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
@@ -362,7 +345,7 @@ export default function FoodList() {
                   <div style={{ fontSize: 13, color: "#9CA3AF" }}>Add your first item using the button above.</div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
                       {["ID", "Item Name", "Category", "Price", "Half Price", "Full Price", "Status", "Image", "Action"].map((h) => (
@@ -472,7 +455,7 @@ export default function FoodList() {
                       );
                     })}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
 
@@ -512,7 +495,7 @@ export default function FoodList() {
                   <div style={{ fontSize: 13, color: "#9CA3AF" }}>Add your first category using the button above.</div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
                       {["ID", "Category Name", "Description", "Status", "Action"].map((h) => (
@@ -607,6 +590,7 @@ export default function FoodList() {
                     })}
                   </tbody>
                 </table>
+               </div>
               )}
             </div>
           </div>

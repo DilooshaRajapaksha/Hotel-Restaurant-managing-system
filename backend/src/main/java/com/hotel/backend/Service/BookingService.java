@@ -2,6 +2,7 @@ package com.hotel.backend.Service;
 
 import com.hotel.backend.DTO.BookingRequestDTO;
 import com.hotel.backend.Entity.Booking;
+import com.hotel.backend.Entity.BookingStatus;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Entity.Role;
 import com.hotel.backend.Entity.User;
@@ -23,36 +24,22 @@ import java.util.Optional;
 @Service
 public class BookingService {
 
-    @Autowired
-    private BookingRepo bookingRepo;
+    @Autowired private BookingRepo bookingRepo;
+    @Autowired private RoomRepo    roomRepo;
+    @Autowired private UserRepo    userRepo;
+    @Autowired private RoleRepo    roleRepo;
+    @Autowired private SimpMessagingTemplate messagingTemplate;
 
-    @Autowired
-    private RoomRepo roomRepo;
+    public List<Booking> getAllBookings()                              { return bookingRepo.findAll(); }
+    public Optional<Booking> getBookingById(Long id)                  { return bookingRepo.findById(id); }
+    // FIX: parameter type is standalone BookingStatus, not Booking.BookingStatus
+    public List<Booking> getBookingsByStatus(BookingStatus s)         { return bookingRepo.findByBookingStatus(s); }
+    public List<Booking> getBookingsByUserId(Long userId)             { return bookingRepo.findByUserId(userId); }
+    public List<Booking> searchBookings(String keyword)               { return bookingRepo.searchBookings(keyword); }
 
-    @Autowired
-    private UserRepo userRepo;
-
-    @Autowired
-    private RoleRepo roleRepo;
-
-    public List<Booking> getAllBookings() {
-        return bookingRepo.findAll();
-    }
-
-    public Optional<Booking> getBookingById(Long id) {
-        return bookingRepo.findById(id);
-    }
-
-    public List<Booking> getBookingsByStatus(Booking.BookingStatus status) {
-        return bookingRepo.findByBookingStatus(status);
-    }
-
-    public Booking createBookingForCustomer(Long userId,
-                                            Long roomId,
-                                            LocalDate checkInDate,
-                                            LocalDate checkOutDate,
-                                            Integer numberOfGuest,
-                                            String specialRequest) {
+    public Booking createBookingForCustomer(Long userId, Long roomId,
+                                            LocalDate checkInDate, LocalDate checkOutDate,
+                                            Integer numberOfGuest, String specialRequest) {
         return createBooking(userId, roomId, checkInDate, checkOutDate, numberOfGuest, specialRequest);
     }
 
@@ -77,9 +64,10 @@ public class BookingService {
             throw new RuntimeException("Check-in date cannot be in the past.");
         }
 
+        // FIX: use standalone BookingStatus enum
         List<Booking> overlapping = bookingRepo.findOverlappingBookings(
                 roomId, checkInDate, checkOutDate,
-                Booking.BookingStatus.PENDING, Booking.BookingStatus.CONFIRMED);
+                BookingStatus.PENDING, BookingStatus.CONFIRMED);
         if (!overlapping.isEmpty()) {
             Booking c = overlapping.get(0);
             throw new RuntimeException(
@@ -99,7 +87,7 @@ public class BookingService {
         booking.setNumberOfGuest(numberOfGuest);
         booking.setSpecialRequest(specialRequest);
         booking.setTotalPrice(totalPrice);
-        booking.setBookingStatus(Booking.BookingStatus.PENDING);
+        booking.setBookingStatus(BookingStatus.PENDING);
 
         Booking saved;
         try {
@@ -108,7 +96,6 @@ public class BookingService {
             throw new RuntimeException("User with id " + userId + " does not exist. The user must be registered before making a booking.");
         }
 
-        // Push WebSocket notification to admin
         User user = userRepo.findById(userId).orElse(null);
         String customerName = user != null
                 ? user.getFirstName() + " " + user.getLastName()
@@ -126,7 +113,7 @@ public class BookingService {
         return saved;
     }
 
-    public Booking updateBookingStatus(Long id, Booking.BookingStatus newStatus) {
+    public Booking updateBookingStatus(Long id, BookingStatus newStatus) {
         Booking booking = bookingRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
         booking.setBookingStatus(newStatus);
@@ -155,35 +142,5 @@ public class BookingService {
 
         return createBooking(user.getUserId(), dto.getRoomId(), checkIn, checkOut,
                 dto.getNumberOfGuest(), dto.getSpecialRequest());
-    }
-
-    public Booking createBooking(BookingRequestDTO dto) {
-        LocalDate checkIn = LocalDate.parse(dto.getCheckInDate());
-        LocalDate checkOut = LocalDate.parse(dto.getCheckOutDate());
-
-        User user = userRepo.findByEmail(dto.getEmail())
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setFirstName(dto.getFirstName());
-                    newUser.setLastName(dto.getLastName() != null ? dto.getLastName() : "");
-                    newUser.setEmail(dto.getEmail());
-                    newUser.setPhoneNumber(dto.getPhoneNumber());
-                    newUser.setPasswordHash("temp-no-password");
-
-                    Role customerRole = roleRepo.findByName("CUSTOMER")
-                            .orElseThrow(() -> new RuntimeException("Default customer role not found"));
-
-                    newUser.setRole(String.valueOf(customerRole));
-                    return userRepo.save(newUser);
-                });
-
-        return createBooking(
-                user.getUserId(),
-                dto.getRoomId(),
-                checkIn,
-                checkOut,
-                dto.getNumberOfGuest(),
-                dto.getSpecialRequest()
-        );
     }
 }

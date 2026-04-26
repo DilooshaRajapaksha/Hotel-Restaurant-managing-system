@@ -1,6 +1,7 @@
 package com.hotel.backend.Controller;
 
 import com.hotel.backend.Entity.Booking;
+import com.hotel.backend.Entity.BookingStatus;
 import com.hotel.backend.Service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,8 @@ public class BookingController {
     @GetMapping("/status/{status}")
     public ResponseEntity<List<Booking>> getByStatus(@PathVariable String status) {
         try {
-            Booking.BookingStatus bs = Booking.BookingStatus.valueOf(status.toUpperCase());
+            // FIX: use standalone BookingStatus enum
+            BookingStatus bs = BookingStatus.valueOf(status.toUpperCase());
             return ResponseEntity.ok(bookingService.getBookingsByStatus(bs));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -59,7 +61,6 @@ public class BookingController {
 
             Booking saved = bookingService.createBooking(
                     userId, roomId, checkIn, checkOut, guests, special);
-
             return ResponseEntity.ok(saved);
 
         } catch (RuntimeException e) {
@@ -76,7 +77,8 @@ public class BookingController {
         try {
             String statusStr = body.get("status");
             if (statusStr == null) return ResponseEntity.badRequest().body("status field is required");
-            Booking.BookingStatus newStatus = Booking.BookingStatus.valueOf(statusStr.toUpperCase());
+            // FIX: use standalone BookingStatus enum
+            BookingStatus newStatus = BookingStatus.valueOf(statusStr.toUpperCase());
             Booking updated = bookingService.updateBookingStatus(id, newStatus);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {

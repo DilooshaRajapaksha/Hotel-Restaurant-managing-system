@@ -1,6 +1,7 @@
 package com.hotel.backend.Controller;
 
 import com.hotel.backend.Entity.Booking;
+import com.hotel.backend.Entity.BookingStatus;
 import com.hotel.backend.Entity.Room;
 import com.hotel.backend.Repo.BookingRepo;
 import com.hotel.backend.Repo.RoomRepo;
@@ -34,12 +35,12 @@ public class ReportController {
 
         List<Booking> allBookings = bookingRepo.findAll();
         data.put("totalBookings",     allBookings.size());
-        data.put("pendingBookings",   allBookings.stream().filter(b -> b.getBookingStatus() == Booking.BookingStatus.PENDING).count());
-        data.put("confirmedBookings", allBookings.stream().filter(b -> b.getBookingStatus() == Booking.BookingStatus.CONFIRMED).count());
-        data.put("cancelledBookings", allBookings.stream().filter(b -> b.getBookingStatus() == Booking.BookingStatus.CANCELLED).count());
+        data.put("pendingBookings",   allBookings.stream().filter(b -> b.getBookingStatus() == BookingStatus.PENDING).count());
+        data.put("confirmedBookings", allBookings.stream().filter(b -> b.getBookingStatus() == BookingStatus.CONFIRMED).count());
+        data.put("cancelledBookings", allBookings.stream().filter(b -> b.getBookingStatus() == BookingStatus.CANCELLED).count());
 
         BigDecimal revenue = allBookings.stream()
-                .filter(b -> b.getBookingStatus() == Booking.BookingStatus.CONFIRMED)
+                .filter(b -> b.getBookingStatus() == BookingStatus.CONFIRMED)
                 .map(Booking::getTotalPrice)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -76,7 +77,7 @@ public class ReportController {
                 .forEach(b -> {
                     int m = b.getCheckInDate().getMonthValue() - 1;
                     monthlyBookings[m]++;
-                    if (b.getBookingStatus() == Booking.BookingStatus.CONFIRMED && b.getTotalPrice() != null)
+                    if (b.getBookingStatus() == BookingStatus.CONFIRMED && b.getTotalPrice() != null)
                         monthlyRevenue[m] = monthlyRevenue[m].add(b.getTotalPrice());
                 });
 
