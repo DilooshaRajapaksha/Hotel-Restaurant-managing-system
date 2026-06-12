@@ -3,7 +3,7 @@ import AdminSidebar from "../../Components/Admin/AdminSideBar";
 import AdminTopBar from "../../Components/Admin/AdminTopBar";
 import api from "../../utils/axiosInstance";
 
-const BASE_URL = "http://localhost:8081";
+const BASE_URL = "http://localhost:8080";
 const PER_PAGE = 6;
 
 const STATUS_CONFIG = {
