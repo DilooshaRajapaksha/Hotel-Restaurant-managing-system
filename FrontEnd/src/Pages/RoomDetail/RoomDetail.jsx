@@ -4,6 +4,7 @@ import ImageGallery from '../../Components/ImageGallery/ImageGallery';
 import PanoramaViewer from '../../Components/PanoramaViewer';
 import BookingForm from '../../Components/BookingForm/BookingForm';
 import './RoomDetail.css';
+import NavBar from '../../Components/NavBar/NavBar';
 
 const BASE_URL = "http://localhost:8081";
 
@@ -110,9 +111,7 @@ const sampleHotspots = [
   return (
     <div className="room-detail-container">
 
-      <button className="back-btn" onClick={() => navigate('/rooms')}>
-        ← Back to Rooms
-      </button>
+    <NavBar/>
 
       <div className="room-detail">
 
