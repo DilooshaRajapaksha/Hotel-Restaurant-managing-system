@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
-                        // Static uploads — always public
+                        // Static uploads — always public so images load on customer pages
                         .requestMatchers("/uploads/**").permitAll()
 
                         // WebSocket
@@ -54,11 +54,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/menu/**").permitAll()
 
+                        // Image upload — admin only
+                        // NEW: allows the admin to upload local images for experiences + rooms
+                        .requestMatchers(HttpMethod.POST, "/api/upload/**").hasRole("ADMIN")
+
                         // Customer routes
                         .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
 
-                        // Admin routes — admin can also access delivery endpoints
-                        // because admin manages delivery staff from the admin panel
+                        // Admin routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/delivery/**").hasAnyRole("ADMIN", "DELIVERY_STAFF")
 

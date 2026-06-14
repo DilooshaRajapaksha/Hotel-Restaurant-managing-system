@@ -1,28 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import './Carousel.css'; 
+import React, { useState, useEffect, useRef } from 'react';
+import './Carousel.css';
 
-const Carousel = ({ images }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const Carousel = ({ images = [], autoPlayInterval = 4000 }) => {
+  const [current, setCurrent] = useState(0);
+  const timerRef = useRef(null);
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+  const goTo = (index) => {
+    setCurrent((index + images.length) % images.length);
   };
 
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+  const resetTimer = () => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, autoPlayInterval);
   };
-
 
   useEffect(() => {
-    const interval = setInterval(nextSlide, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (images.length <= 1) return;
+    resetTimer();
+    return () => clearInterval(timerRef.current);
+  }, [images.length]);
+
+  const handlePrev = () => { goTo(current - 1); resetTimer(); };
+  const handleNext = () => { goTo(current + 1); resetTimer(); };
+
+  if (!images.length) return null;
 
   return (
     <div className="carousel">
-      <button className="carousel-btn prev" onClick={prevSlide}>&lt;</button>
-      <img src={images[currentIndex]} alt="Hotel Slide" className="carousel-image" />
-      <button className="carousel-btn next" onClick={nextSlide}>&gt;</button>
+      {images.map((img, i) => (
+        <img
+          key={i}
+          src={img}
+          alt=""
+          className="carousel-image"
+          style={{ opacity: i === current ? 1 : 0, transition: 'opacity 0.6s ease' }}
+        />
+      ))}
+
+      {images.length > 1 && (
+        <>
+          <button className="carousel-btn prev" onClick={handlePrev} aria-label="Previous">
+            &#8249;
+          </button>
+          <button className="carousel-btn next" onClick={handleNext} aria-label="Next">
+            &#8250;
+          </button>
+          <div className="carousel-dots">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                className={`carousel-dot${i === current ? ' active' : ''}`}
+                onClick={() => { goTo(i); resetTimer(); }}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './Context/AuthContext';
+
 import { CartProvider } from './Context/CartContext';
 import { NotificationProvider } from './Context/NotificationContext';
 import ProtectedRoute from './Components/ProtectedRoute';
@@ -21,6 +21,7 @@ import Profile       from './Pages/Profile/Profile';
 import MyOrdersPage  from './Pages/MyOrdersPage';
 import OrderTrackingPage from './Pages/OrderTrackingPage';
 import RoomDetail    from './Pages/RoomDetail/RoomDetail';
+import Experiences   from './Pages/Experiences/Experiences';
 
 // Admin pages
 import AdminDashboard  from './Pages/Admin/AdminDashboard';
@@ -56,7 +57,7 @@ function AdminToast() {
 
 function App() {
   return (
-    <AuthProvider>
+    
       <CartProvider>
         <Routes>
 
@@ -77,8 +78,8 @@ function App() {
           <Route path="/signup"          element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password"  element={<ResetPassword />} />
-          <Route path="/experiences"     element={<AdminExperiences />} />
-          <Route path="/experiences/all" element={<AdminExperiences />} />
+          <Route path="/experiences"     element={<Experiences />} />
+          <Route path="/experiences/all" element={<Experiences />} />
 
           {/* ── ADMIN ROUTES ─────────────────────────────────────────── */}
           <Route
@@ -114,16 +115,7 @@ function App() {
           />
 
           {/* ── DELIVERY STAFF ROUTES ────────────────────────────────── */}
-          {/*
-            Delivery persons only see their own self-service portal:
-            - Dashboard    : their profile + stats + active orders preview
-            - Available    : unassigned orders they can self-assign
-            - My Orders    : their assigned orders + status update + Google Maps
-            - History      : same My Orders page on history tab
-
-            Admin functions (add staff, assign to others, view all staff)
-            are ONLY accessible via /admin/delivery/*, never here.
-          */}
+          
           <Route
             path="/delivery/*"
             element={
@@ -143,7 +135,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </CartProvider>
-    </AuthProvider>
+    
   );
 }
 

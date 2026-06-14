@@ -8,10 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/experiences")
-@CrossOrigin(origins = "*")
 public class ExperiencesController {
 
     @Autowired
@@ -29,7 +27,9 @@ public class ExperiencesController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Experiences> updateExperience(@PathVariable Long id, @RequestBody Experiences experience) {
+    public ResponseEntity<Experiences> updateExperience(
+            @PathVariable Long id,
+            @RequestBody Experiences experience) {
         Experiences updated = experiencesService.updateExperience(id, experience);
         return ResponseEntity.ok(updated);
     }

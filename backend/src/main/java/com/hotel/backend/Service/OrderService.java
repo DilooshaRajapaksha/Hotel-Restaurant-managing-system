@@ -90,7 +90,6 @@ public class OrderService {
         order.setUser(user);
         order.setAddress(savedAddress);
         order.setOrderDate(LocalDateTime.now());
-        // FIX: set enum value, not String
         order.setOrderStatus(OrderStatus.PENDING);
         order.setTotalAmount(BigDecimal.ZERO);
 
@@ -110,8 +109,17 @@ public class OrderService {
             if (menuItem.getIsAvailable() == null || !menuItem.getIsAvailable())
                 throw new RuntimeException("Menu item is unavailable: " + menuItem.getItemName());
 
-            BigDecimal unitPrice = menuItem.getPrice();
-            BigDecimal subtotal  = unitPrice.multiply(BigDecimal.valueOf(reqItem.getQuantity()));
+            BigDecimal unitPrice;
+            String size = reqItem.getSelectedSize();
+            if ("HALF".equalsIgnoreCase(size) && menuItem.getHalfPrice() != null && menuItem.getHalfPrice().compareTo(BigDecimal.ZERO) > 0) {
+                unitPrice = menuItem.getHalfPrice();
+            } else if ("FULL".equalsIgnoreCase(size) && menuItem.getFullPrice() != null && menuItem.getFullPrice().compareTo(BigDecimal.ZERO) > 0) {
+                unitPrice = menuItem.getFullPrice();
+            } else {
+                // DEFAULT or no size specified — use base price
+                unitPrice = menuItem.getPrice();
+            }
+            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(reqItem.getQuantity()));
             totalAmount = totalAmount.add(subtotal);
 
             OrderItem orderItem = new OrderItem();
