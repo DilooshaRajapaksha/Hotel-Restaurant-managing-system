@@ -289,7 +289,6 @@ export default function UpdateRoom() {
         <AdminSidebar />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
 
-          {/* Topbar */}
           <AdminTopBar pageTitle="Edit Room" />
 
           <div style={{ padding: "32px", flex: 1 }}>
@@ -308,7 +307,6 @@ export default function UpdateRoom() {
             <form onSubmit={handleSubmit} noValidate>
               <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden" }}>
 
-                {}
                 <div style={{ padding: "18px 28px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9A84C" }} />
                   <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Edit Room Details</span>
@@ -320,14 +318,12 @@ export default function UpdateRoom() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 28px" }}>
 
-                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Name <span style={{ color: "#EF4444" }}>*</span></label>
                       <input className="fi" style={inp(!!errors.roomName)} type="text" name="roomName" value={form.roomName} onChange={handleChange} />
                       {errors.roomName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomName}</span>}
                     </div>
 
-                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                         Room Type <span style={{ color: "#EF4444" }}>*</span>
@@ -347,7 +343,6 @@ export default function UpdateRoom() {
                       {errors.roomTypeName && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomTypeName}</span>}
                     </div>
 
-                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Room Price (Rs.) <span style={{ color: "#EF4444" }}>*</span></label>
                       <div style={{ position: "relative" }}>
@@ -357,7 +352,6 @@ export default function UpdateRoom() {
                       {errors.roomPrice && <span style={{ fontSize: 12, color: "#EF4444" }}>⚠ {errors.roomPrice}</span>}
                     </div>
 
-                    {}
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                         Capacity <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 6 }}>(auto-filled from room type)</span>
@@ -370,7 +364,6 @@ export default function UpdateRoom() {
 
                   </div>
 
-                  {}
                   <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 6 }}>
                     <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                       Room Description
@@ -381,13 +374,11 @@ export default function UpdateRoom() {
                       name="description"
                       placeholder="e.g. Room size 28 m², The spacious double room features air conditioning, a flat-screen TV..."
                       value={form.description} onChange={handleChange} />
-                    <span style={{ fontSize: 11, color: "#9CA3AF" }}>ℹ Saved once Diloosha adds the description column to ROOM table during merge.</span>
                   </div>
                 </div>
 
                 <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
 
-                {}
                 <div style={{ padding: "24px 28px" }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Status</p>
                   <div style={{ display: "flex", gap: 12 }}>
@@ -409,7 +400,6 @@ export default function UpdateRoom() {
 
                 <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
 
-                {}
                 <div style={{ padding: "24px 28px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase" }}>Facilities & Amenities</p>
@@ -449,7 +439,6 @@ export default function UpdateRoom() {
 
                 <div style={{ height: 1, background: "#F3F4F6", margin: "0 28px" }} />
 
-                {}
                 <div style={{ padding: "24px 28px" }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 16 }}>Room Images</p>
 
@@ -507,7 +496,6 @@ export default function UpdateRoom() {
                   </div>
                 </div>
 
-                {}
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
                   <button type="button" className="br" onClick={() => navigate("/admin/rooms")}
                     style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer", fontFamily: "inherit" }}>
@@ -519,19 +507,6 @@ export default function UpdateRoom() {
                   </button>
                 </div>
 
-                </div>
-
-                {/* Form actions */}
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", padding: "18px 28px", borderTop: "1px solid #F3F4F6", background: "#FAFAFA" }}>
-                  <button type="button" className="br" onClick={() => navigate("/admin/rooms")}
-                    style={{ padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", cursor: "pointer" }}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="bs" disabled={isLoading}
-                    style={{ padding: "10px 28px", borderRadius: 8, fontSize: 14, fontWeight: 700, border: "none", background: "linear-gradient(135deg,#C9A84C,#8B6914)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(201,168,76,0.3)", fontFamily: "inherit" }}>
-                    <Icons.save />{isLoading ? "Saving..." : "Save Changes"}
-                  </button>
-                </div>
               </div>
             </form>
           </div>

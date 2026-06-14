@@ -17,9 +17,7 @@ public class ExperiencesServiceImpl implements ExperienceServices {
 
     @Override
     public List<Experiences> getAllExperiences() {
-        // FIX: replaced the broken JPQL query (e.isActive = true caused
-        // IllegalArgumentException in Hibernate 6) with findAll() + Java
-        // stream filtering. This is version-agnostic and always reliable.
+
         return experiencesRepository.findAll().stream()
                 .filter(e -> e.getIsActive() == null || Boolean.TRUE.equals(e.getIsActive()))
                 .sorted(Comparator.comparing(
