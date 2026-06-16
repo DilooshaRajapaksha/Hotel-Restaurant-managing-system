@@ -55,7 +55,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/menu/**").permitAll()
 
                         // Image upload — admin only
-                        // NEW: allows the admin to upload local images for experiences + rooms
                         .requestMatchers(HttpMethod.POST, "/api/upload/**").hasRole("ADMIN")
 
                         // Customer routes
@@ -88,7 +87,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*"));
+
+        // ✅ FIXED: Added Vercel + any custom domain alongside localhost
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",          // local dev
+                "https://*.vercel.app",        // Vercel preview & production URLs
+                "https://goldenstays.vercel.app" // your specific Vercel domain
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
